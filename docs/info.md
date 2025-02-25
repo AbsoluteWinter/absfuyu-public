@@ -14,11 +14,11 @@
 
 ---
 
-## **SUMMARY:**
+# SUMMARY
 
 This project is a collection of code primarily developed as a personal hobby. It aims to provide practical experience and enhance my coding skills while exploring potential future applications.
 
-## **INSTALLATION:**
+# INSTALLATION
 
 To install the package, run the following command:
 
@@ -26,14 +26,14 @@ To install the package, run the following command:
 pip install -U absfuyu
 ```
 
-## **USAGE:**
+# USAGE
 
 ```python
 import absfuyu
 help(absfuyu)
 ```
 
-### Notable features
+## Notable features
 
 **absfuyu.core**: Provides foundational components for additional functionalities.
 
@@ -55,13 +55,7 @@ for x in [DictExt, IntExt, ListExt, Text]:
 
 There are many additional features available to explore.
 
-## **DOCUMENTATION:**
-
-For more detailed information about the project, please refer to the documentation available at the following link:
-
-> [Project Documentation](https://absolutewinter.github.io/absfuyu-docs/)
-
-## **DEVELOPMENT SETUP**
+# DEVELOPMENT SETUP
 
 1. Create a Virtual Environment
 
@@ -87,6 +81,6 @@ python -m pip install -e .[full,dev]
 hatch env show
 ```
 
-## **LICENSE:**
+# LICENSE
 
 This project is licensed under the MIT License.
