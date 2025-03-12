@@ -3,8 +3,8 @@ Absufyu: Checksum
 -----------------
 Check MD5, SHA256, ...
 
-Version: 5.0.0
-Date updated: 25/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 """
 
 # Module level
@@ -19,7 +19,9 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Literal
 
-from absfuyu.core import BaseClass, deprecated, tqdm, versionadded, versionchanged
+from absfuyu.core.baseclass import BaseClass
+from absfuyu.core.docstring import deprecated, versionadded, versionchanged
+from absfuyu.core.dummy_func import tqdm
 
 
 # Function
@@ -65,6 +67,21 @@ class ChecksumMode(StrEnum):
 @versionchanged("4.1.1", reason="Checksum for entire folder is possible")
 @versionadded("4.1.0")
 class Checksum(BaseClass):
+    """
+    Checksum engine
+
+    Parameters
+    ----------
+    path : str | Path
+        Path to file/directory to perform checksum
+
+    hash_mode : ChecksumMode | Literal["md5", "sha1", "sha256", "sha512"], optional
+        Hash mode, by default ``"sha256"``
+
+    save_result_to_file : bool, optional
+        Save checksum result(s) to file, by default ``False``
+    """
+
     def __init__(
         self,
         path: str | Path,
@@ -73,7 +90,8 @@ class Checksum(BaseClass):
         ) = ChecksumMode.SHA256,
         save_result_to_file: bool = False,
     ) -> None:
-        """Checksum engine
+        """
+        Checksum engine
 
         Parameters
         ----------
@@ -84,7 +102,7 @@ class Checksum(BaseClass):
             Hash mode, by default ``"sha256"``
 
         save_result_to_file : bool, optional
-            Save checksum result(s) to file, by default False
+            Save checksum result(s) to file, by default ``False``
         """
         self.path = Path(path)
         self.hash_mode = hash_mode
@@ -125,12 +143,14 @@ class Checksum(BaseClass):
         return hash_engine.hexdigest()  # type: ignore
 
     def checksum(self, recursive: bool = True) -> str:
-        """Perform checksum
+        """
+        Perform checksum
 
         Parameters
         ----------
         recursive : bool, optional
-            Do checksum for every file in the folder (including child folder), by default True
+            Do checksum for every file in the folder (including child folder),
+            by default ``True``
 
         Returns
         -------

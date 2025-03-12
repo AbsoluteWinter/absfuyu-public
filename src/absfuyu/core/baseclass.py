@@ -3,8 +3,8 @@ Absfuyu: Core
 -------------
 Bases for other features
 
-Version: 5.0.0
-Date updated: 25/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 """
 
 # Module Package
@@ -12,6 +12,9 @@ Date updated: 25/02/2025 (dd/mm/yyyy)
 __all__ = [
     # Color
     "CLITextColor",
+    # Support
+    "MethodNPropertyList",
+    "MethodNPropertyResult",
     # Mixins
     "ShowAllMethodsMixin",
     "AutoREPRMixin",
@@ -20,6 +23,10 @@ __all__ = [
     # Metaclass
     "PositiveInitArgsMeta",
 ]
+
+# Library
+# ---------------------------------------------------------------------------
+from typing import ClassVar, Literal, NamedTuple, Self
 
 
 # Color
@@ -41,22 +48,443 @@ class CLITextColor:
 
 # Mixins
 # ---------------------------------------------------------------------------
+# @versionadded("5.1.0")
+class MethodNPropertyList(NamedTuple):
+    """
+    Contains lists of methods, classmethods, staticmethods, and properties of a class.
+
+    Parameters
+    ----------
+    methods : list[str]
+        List contains method names of a class.
+
+    classmethods : list[str]
+        List contains classmethod names of a class.
+
+    staticmethods : list[str]
+        List contains staticmethod names of a class.
+
+    properties : list[str]
+        List contains property names of a class.
+    """
+
+    methods: list[str]
+    classmethods: list[str]
+    staticmethods: list[str]
+    properties: list[str]
+
+    def __repr__(self) -> str:
+        """
+        Only shows list with items in repr
+
+        *This overwrites ``NamedTuple.__repr__()``*
+        """
+        # return super().__repr__()
+        cls_name = self.__class__.__name__
+        out = []
+        sep = ", "
+        for x in self._fields:
+            if len(getattr(self, x)) > 0:
+                out.append(f"{x}={repr(getattr(self, x))}")
+        return f"{cls_name}({sep.join(out)})"
+
+    def is_empty(self) -> bool:
+        """
+        Checks if all lists (methods, classmethods, staticmethods, properties) are empty.
+        """
+        # for x in self:
+        #     if len(x) > 0:
+        #         return False
+        # return True
+        return all(len(getattr(self, x)) == 0 for x in self._fields)
+
+    def pack(
+        self,
+        include_method: bool = True,
+        include_classmethod: bool = True,
+        classmethod_indicator: str = "<classmethod>",
+        include_staticmethod: bool = True,
+        staticmethod_indicator: str = "<staticmethod>",
+    ) -> Self:
+        """
+        Combines methods, classmethods, and staticmethods into one list.
+
+        Parameters
+        ----------
+        include_method : bool, optional
+            Whether to include methods in the output, by default ``True``
+
+        include_classmethod : bool, optional
+            Whether to include classmethods in the output, by default ``True``
+
+        classmethod_indicator : str, optional
+            A string used to mark classmethod in the output. This string is appended
+            to the name of each classmethod to visually differentiate it from regular
+            instance methods, by default ``"<classmethod>"``
+
+        include_staticmethod : bool, optional
+            Whether to include staticmethods in the output, by default ``True``
+
+        staticmethod_indicator : str, optional
+            A string used to mark staticmethod in the output. This string is appended
+            to the name of each staticmethod to visually differentiate it from regular
+            instance methods, by default ``"<staticmethod>"``
+
+        Returns
+        -------
+        Self
+            MethodNPropertyList (combined methods lists)
+
+
+        Example:
+        --------
+        >>> test = MethodNPropertyList(["a"], ["b"], ["c"], ["d"])
+        >>> test.pack()
+        MethodNPropertyList(methods=['a', 'b <classmethod>', 'c <staticmethod>'], properties=['d'])
+        """
+        new_methods_list = []
+
+        # Method
+        if include_method:
+            new_methods_list.extend(self.methods)
+
+        # Classmethod
+        if include_classmethod:
+            new_methods_list.extend(
+                [f"{x} {classmethod_indicator}".strip() for x in self.classmethods]
+            )
+
+        # Staticmethod
+        if include_staticmethod:
+            new_methods_list.extend(
+                [f"{x} {staticmethod_indicator}".strip() for x in self.staticmethods]
+            )
+
+        return self.__class__(new_methods_list, [], [], self.properties)
+
+
+# @versionadded("5.1.0")
+class MethodNPropertyResult(dict[str, MethodNPropertyList]):
+    """
+    All methods and properties of a class and its parent classes.
+
+    Sorted in ascending order.
+    """
+
+    _LINELENGTH: ClassVar[int] = 88
+
+    def _merge_value(
+        self,
+        value_name: Literal["methods", "classmethods", "staticmethods", "properties"],
+    ) -> list[str]:
+        """
+        Merge all specified values from the dictionary.
+
+        Parameters
+        ----------
+        value_name : Literal["methods", "classmethods", "staticmethods", "properties"]
+            The type of value to merge.
+
+        Returns
+        -------
+        list[str]
+            A list of merged values.
+        """
+        merged = []
+        for _, methods_n_properties in self.items():
+            if value_name in methods_n_properties._fields:
+                merged.extend(getattr(methods_n_properties, value_name))
+        return merged
+
+    def flatten_value(self) -> MethodNPropertyList:
+        """
+        Merge all attributes of ``dict``'s values into one ``MethodNPropertyList``.
+
+        Returns
+        -------
+        MethodNPropertyList
+            Flattened value
+
+
+        Example:
+        --------
+        >>> test = MethodNPropertyResult(
+        ...     ABC=MethodNPropertyList(["a"], ["b"], ["c"], ["d"]),
+        ...     DEF=MethodNPropertyList(["e"], ["f"], ["g"], ["h"]),
+        ... )
+        >>> test.flatten_value()
+        MethodNPropertyList(methods=["a", "e"], classmethods=["b", "f"], staticmethods=["c", "g"], properties=["d", "h"])
+        """
+        res = []
+        for x in ["methods", "classmethods", "staticmethods", "properties"]:
+            res.append(self._merge_value(x))  # type: ignore
+        return MethodNPropertyList._make(res)
+
+    def pack_value(
+        self,
+        include_method: bool = True,
+        include_classmethod: bool = True,
+        classmethod_indicator: str = "<classmethod>",
+        include_staticmethod: bool = True,
+        staticmethod_indicator: str = "<staticmethod>",
+    ) -> Self:
+        """
+        Join method, classmethod, staticmethod into one list for each value.
+
+        Parameters
+        ----------
+        include_method : bool, optional
+            Whether to include method in the output, by default ``True``
+
+        include_classmethod : bool, optional
+            Whether to include classmethod in the output, by default ``True``
+
+        classmethod_indicator : str, optional
+            A string used to mark classmethod in the output. This string is appended
+            to the name of each classmethod to visually differentiate it from regular
+            instance methods, by default ``"<classmethod>"``
+
+        include_staticmethod : bool, optional
+            Whether to include staticmethod in the output, by default ``True``
+
+        staticmethod_indicator : str, optional
+            A string used to mark staticmethod in the output. This string is appended
+            to the name of each staticmethod to visually differentiate it from regular
+            instance methods, by default ``"<staticmethod>"``
+
+        Returns
+        -------
+        Self
+            MethodNPropertyResult with packed value.
+
+
+        Example:
+        --------
+        >>> test = MethodNPropertyResult(
+        ...     ABC=MethodNPropertyList(["a"], ["b"], ["c"], ["d"]),
+        ...     DEF=MethodNPropertyList(["e"], ["f"], ["g"], ["h"]),
+        ... )
+        >>> test.pack_value()
+        {
+            "ABC": MethodNPropertyList(
+                methods=["a", "b <classmethod>", "c <staticmethod>"], properties=["d"]
+            ),
+            "DEF": MethodNPropertyList(
+                methods=["e", "f <classmethod>", "g <staticmethod>"], properties=["h"]
+            ),
+        }
+        """
+        for class_name, method_prop_list in self.items():
+            self[class_name] = method_prop_list.pack(
+                include_method=include_method,
+                include_classmethod=include_classmethod,
+                classmethod_indicator=classmethod_indicator,
+                include_staticmethod=include_staticmethod,
+                staticmethod_indicator=staticmethod_indicator,
+            )
+        return self
+
+    def prioritize_value(
+        self,
+        value_name: Literal[
+            "methods", "classmethods", "staticmethods", "properties"
+        ] = "methods",
+    ) -> dict[str, list[str]]:
+        """
+        Prioritize which field of value to show.
+
+        Parameters
+        ----------
+        value_name : Literal["methods", "classmethods", "staticmethods", "properties"], optional
+            The type of value to prioritize, by default ``"methods"``
+
+        Returns
+        -------
+        dict[str, list[str]]
+            A dictionary with prioritized values.
+
+
+        Example:
+        --------
+        >>> test = MethodNPropertyResult(
+        ...     ABC=MethodNPropertyList(["a"], ["b"], ["c"], ["d"]),
+        ...     DEF=MethodNPropertyList(["e"], ["f"], ["g"], ["h"]),
+        ... )
+        >>> test.prioritize_value("methods")
+        {'ABC': ['a'], 'DEF': ['e']}
+        >>> test.prioritize_value("classmethods")
+        {'ABC': ['b'], 'DEF': ['f']}
+        >>> test.prioritize_value("staticmethods")
+        {'ABC': ['c'], 'DEF': ['g']}
+        >>> test.prioritize_value("properties")
+        {'ABC': ['d'], 'DEF': ['h']}
+        """
+        result = {}
+        for k, v in self.items():
+            result[k] = getattr(v, value_name, v.methods)
+        return result
+
+    def print_output(
+        self,
+        where_to_print: Literal["methods", "properties"] = "methods",
+        print_in_one_column: bool = False,
+    ) -> None:
+        """
+        Beautifully print the result.
+
+        Parameters
+        ----------
+        where_to_print : Literal["methods", "properties"], optional
+            Whether to print ``self.methods`` or ``self.properties``, by default ``"methods"``
+
+        print_in_one_column : bool, optional
+            Whether to print in one column, by default ``False``
+        """
+
+        print_func = print  # Can be extended with function parameter
+
+        # Loop through each class base
+        for order, (class_base, methods_n_properties) in enumerate(
+            self.items(), start=1
+        ):
+            methods: list[str] = getattr(
+                methods_n_properties, where_to_print, methods_n_properties.methods
+            )
+            mlen = len(methods)  # How many methods in that class
+            if mlen == 0:
+                continue
+            print_func(f"{order:02}. <{class_base}> | len: {mlen:02}")
+
+            # Modify methods list
+            max_method_name_len = max([len(x) for x in methods])
+            if mlen % 2 == 0:
+                p1, p2 = methods[: int(mlen / 2)], methods[int(mlen / 2) :]
+            else:
+                p1, p2 = methods[: int(mlen / 2) + 1], methods[int(mlen / 2) + 1 :]
+                p2.append("")
+            new_methods = list(zip(p1, p2))
+
+            # print
+            if print_in_one_column:
+                # This print 1 method in one line
+                for name in methods:
+                    print(f"    - {name.ljust(max_method_name_len)}")
+            else:
+                # This print 2 methods in 1 line
+                for x1, x2 in new_methods:
+                    if x2 == "":
+                        print_func(f"    - {x1.ljust(max_method_name_len)}")
+                    else:
+                        print_func(
+                            f"    - {x1.ljust(max_method_name_len)}    - {x2.ljust(max_method_name_len)}"
+                        )
+
+            print_func("".ljust(self._LINELENGTH, "-"))
+
+
 class ShowAllMethodsMixin:
     """
     Show all methods of the class and its parent class minus ``object`` class
 
     *This class is meant to be used with other class*
+
+
+    Example:
+    --------
+    >>> class TestClass(ShowAllMethodsMixin):
+    ...     def method1(self): ...
+    >>> TestClass._get_methods_and_properties()
+    {
+        "ShowAllMethodsMixin": MethodNPropertyList(
+            classmethods=[
+                "_get_methods_and_properties",
+                "show_all_methods",
+                "show_all_properties",
+            ]
+        ),
+        "TestClass": MethodNPropertyList(
+            methods=["method1"]
+        ),
+    }
     """
+
+    # @versionadded("5.1.0")
+    @classmethod
+    def _get_methods_and_properties(
+        cls,
+        skip_private_attribute: bool = True,
+        include_private_method: bool = False,
+    ) -> MethodNPropertyResult:
+        """
+        Class method to get all methods and properties of the class and its parent classes
+
+        Parameters
+        ----------
+        skip_private_attribute : bool, optional
+            Whether to include attribute with ``__`` (dunder) in the output, by default ``True``
+
+        include_private_method : bool, optional
+            Whether to include private method in the output, by default ``False``
+
+        Returns
+        -------
+        MethodNPropertyResult
+            A dictionary where keys are class names and values are tuples of method names and properties.
+        """
+
+        # MRO in reverse order
+        classes = cls.__mro__[::-1]
+        result = {}
+
+        # For each class base in classes
+        for base in classes:
+            methods = []
+            classmethods = []
+            staticmethods = []
+            properties = []
+
+            # Dict items of base
+            for name, attr in base.__dict__.items():
+                # Skip private attribute
+                if name.startswith("__") and skip_private_attribute:
+                    continue
+
+                # Skip private Callable
+                if base.__name__ in name and not include_private_method:
+                    continue
+
+                # Methods
+                if callable(attr):
+                    if isinstance(attr, staticmethod):
+                        staticmethods.append(name)
+                    else:
+                        methods.append(name)
+                if isinstance(attr, classmethod):
+                    classmethods.append(name)
+
+                # Property
+                if isinstance(attr, property):
+                    properties.append(name)
+
+                # Save to result
+                result[base.__name__] = MethodNPropertyList(
+                    methods=sorted(methods),
+                    classmethods=sorted(classmethods),
+                    staticmethods=sorted(staticmethods),
+                    properties=sorted(properties),
+                )
+
+        return MethodNPropertyResult(result)
 
     @classmethod
     def show_all_methods(
         cls,
+        print_result: bool = False,
         include_classmethod: bool = True,
         classmethod_indicator: str = "<classmethod>",
         include_staticmethod: bool = True,
         staticmethod_indicator: str = "<staticmethod>",
         include_private_method: bool = False,
-        print_result: bool = False,
     ) -> dict[str, list[str]]:
         """
         Class method to display all methods of the class and its parent classes,
@@ -64,6 +492,9 @@ class ShowAllMethodsMixin:
 
         Parameters
         ----------
+        print_result : bool, optional
+            Beautifully print the output, by default ``False``
+
         include_classmethod : bool, optional
             Whether to include classmethod in the output, by default ``True``
 
@@ -83,44 +514,25 @@ class ShowAllMethodsMixin:
         include_private_method : bool, optional
             Whether to include private method in the output, by default ``False``
 
-        print_result : bool, optional
-            Beautifully print the output, by default ``False``
-
         Returns
         -------
         dict[str, list[str]]
             A dictionary where keys are class names and values are lists of method names.
         """
-        classes = cls.__mro__[::-1][1:]  # MRO in reverse order
-        result = {}
-        for base in classes:
-            methods = []
-            for name, attr in base.__dict__.items():
-                # Skip private attribute
-                if name.startswith("__"):
-                    continue
 
-                # Skip private Callable
-                if base.__name__ in name and not include_private_method:
-                    continue
-
-                # Function
-                if callable(attr):
-                    if isinstance(attr, staticmethod):
-                        if include_staticmethod:
-                            methods.append(f"{name} {staticmethod_indicator}")
-                    else:
-                        methods.append(name)
-                if isinstance(attr, classmethod) and include_classmethod:
-                    methods.append(f"{name} {classmethod_indicator}")
-
-            if methods:
-                result[base.__name__] = sorted(methods)
+        result = cls._get_methods_and_properties(
+            include_private_method=include_private_method
+        ).pack_value(
+            include_classmethod=include_classmethod,
+            classmethod_indicator=classmethod_indicator,
+            include_staticmethod=include_staticmethod,
+            staticmethod_indicator=staticmethod_indicator,
+        )
 
         if print_result:
-            cls.__print_show_all_result(result)
+            result.print_output("methods")
 
-        return result
+        return result.prioritize_value("methods")
 
     @classmethod
     def show_all_properties(cls, print_result: bool = False) -> dict[str, list[str]]:
@@ -138,66 +550,23 @@ class ShowAllMethodsMixin:
         dict[str, list[str]]
             A dictionary where keys are class names and values are lists of property names.
         """
-        classes = cls.__mro__[::-1][1:]  # MRO in reverse order
-        result = {}
-        for base in classes:
-            properties = []
-            for name, attr in base.__dict__.items():
-                # Skip private attribute
-                if name.startswith("__"):
-                    continue
 
-                if isinstance(attr, property):
-                    properties.append(name)
-
-            if properties:
-                result[base.__name__] = sorted(properties)
+        # result = cls.get_methods_and_properties().prioritize_value("properties")
+        result = MethodNPropertyResult(
+            {
+                cls.__name__: MethodNPropertyList(
+                    [],
+                    [],
+                    [],
+                    cls._get_methods_and_properties().flatten_value().properties,
+                )
+            }
+        )
 
         if print_result:
-            cls.__print_show_all_result(result)
+            result.print_output("properties")
 
-        return result
-
-    @staticmethod
-    def __print_show_all_result(result: dict[str, list[str]]) -> None:
-        """
-        Pretty print the result of ``ShowAllMethodsMixin.show_all_methods()``
-
-        Parameters
-        ----------
-        result : dict[str, list[str]]
-            Result of ``ShowAllMethodsMixin.show_all_methods()``
-        """
-        print_func = print  # Can be extended with function parameter
-
-        # Loop through each class base
-        for order, (class_base, methods) in enumerate(result.items(), start=1):
-            mlen = len(methods)  # How many methods in that class
-            print_func(f"{order:02}. <{class_base}> | len: {mlen:02}")
-
-            # Modify methods list
-            max_method_name_len = max([len(x) for x in methods])
-            if mlen % 2 == 0:
-                p1, p2 = methods[: int(mlen / 2)], methods[int(mlen / 2) :]
-            else:
-                p1, p2 = methods[: int(mlen / 2) + 1], methods[int(mlen / 2) + 1 :]
-                p2.append("")
-            new_methods = list(zip(p1, p2))
-
-            # This print 2 methods in 1 line
-            for x1, x2 in new_methods:
-                if x2 == "":
-                    print_func(f"    - {x1.ljust(max_method_name_len)}")
-                else:
-                    print_func(
-                        f"    - {x1.ljust(max_method_name_len)}    - {x2.ljust(max_method_name_len)}"
-                    )
-
-            # This print 1 method in one line
-            # for name in methods:
-            #     print(f"    - {name.ljust(max_method_name_len)}")
-
-            print_func("".ljust(88, "-"))
+        return result.prioritize_value("properties")
 
 
 class AutoREPRMixin:

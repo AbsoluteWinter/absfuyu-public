@@ -77,7 +77,7 @@ only-include = ["src", "tests", "docs", "images", "dev_requirements.txt"]
 
 # Set up virtual env: use hatch env show
 [tool.hatch.envs.default]
-dependencies = ["coverage[toml]", "pytest", "pytest-cov"]
+dependencies = ["coverage[toml]", "pytest", "pytest-cov", "pytest-mock"]
 description = """
 Default environment
 
@@ -95,7 +95,7 @@ cov = ["test-cov", "cov-report"]                                    # use this
 cov2 = "pytest --cov-report=term-missing --cov=absfuyu --cov=tests" # use this
 
 [tool.hatch.envs.all]
-dependencies = ["coverage[toml]", "pytest", "pytest-cov", "pytest-xdist"]
+dependencies = ["coverage[toml]", "pytest", "pytest-cov", "pytest-mock", "pytest-xdist"]
 features = ["full"]
 description = """
 All python version to test:
@@ -153,6 +153,9 @@ clean = [
     python -c "print('Cleaning up...DONE')"
     """,
 ]
+build_only = [
+    "sphinx-build docs docs/build",           # Build
+]
 build_private = [
     # -f --force
     # -e --separate
@@ -164,7 +167,7 @@ build_private = [
 build = [
     "clean",
     "sphinx-apidoc -o docs/ src/absfuyu -eM", # Generate
-    "sphinx-build docs docs/build",           # Build
+    "build_only",                             # Build
 ]
 live = [
     "sphinx-apidoc -o docs/ src/absfuyu -feM", # Generate

@@ -3,8 +3,8 @@ Absfuyu: General
 ----------------
 Collection of useful classes
 
-Version: 5.0.0
-Date updated: 22/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 
 Features:
 ---------
@@ -15,9 +15,9 @@ Features:
 
 # Module level
 # ---------------------------------------------------------------------------
-__all__ = ["content", "generator", "human"]
+__all__ = ["content", "shape", "human"]
 
 
 # Libary
 # ---------------------------------------------------------------------------
-from absfuyu.general import content, generator, human
+from absfuyu.general import content, human, shape

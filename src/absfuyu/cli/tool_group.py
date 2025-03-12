@@ -3,12 +3,18 @@ ABSFUYU CLI
 -----------
 Tool
 
-Version: 5.0.0
-Date updated: 22/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 """
 
+
+# Module Package
+# ---------------------------------------------------------------------------
 __all__ = ["tool_group"]
 
+
+# Library
+# ---------------------------------------------------------------------------
 from typing import Literal
 
 import click
@@ -17,6 +23,8 @@ from absfuyu.tools.checksum import Checksum
 from absfuyu.tools.converter import Base64EncodeDecode, Text2Chemistry
 
 
+# CLI
+# ---------------------------------------------------------------------------
 @click.command(name="checksum")
 @click.argument("file_path", type=str)
 @click.option(
@@ -65,13 +73,12 @@ def file_checksum(
     hash_to_compare: str | None,
 ) -> None:
     """Checksum for file/directory"""
-    # print(hash_mode, save_result, recursive_mode)
     instance = Checksum(file_path, hash_mode=hash_mode, save_result_to_file=save_result)
     res = instance.checksum(recursive=recursive_mode)
     if hash_to_compare is None:
-        print(res)
+        click.echo(res)
     else:
-        print(res == hash_to_compare)
+        click.echo(res == hash_to_compare)
 
 
 @click.command(name="t2c")
@@ -80,21 +87,21 @@ def text2chem(text: str) -> None:
     """Convert text into chemistry symbol"""
     engine = Text2Chemistry()
     out = engine.convert(text)
-    print(Text2Chemistry.beautify_result(out))
+    click.echo(Text2Chemistry.beautify_result(out))
 
 
 @click.command(name="e")
 @click.argument("text", type=str)
 def base64encode(text: str) -> None:
     """Convert text to base64"""
-    print(Base64EncodeDecode.encode(text))
+    click.echo(Base64EncodeDecode.encode(text))
 
 
 @click.command(name="d")
 @click.argument("text", type=str)
 def base64decode(text: str) -> None:
     """Convert base64 to text"""
-    print(Base64EncodeDecode.decode(text))
+    click.echo(Base64EncodeDecode.decode(text))
 
 
 @click.command(name="img")
@@ -111,7 +118,7 @@ def base64decode(text: str) -> None:
 @click.argument("img_path", type=str)
 def base64convert_img(img_path: str, data_tag: bool) -> None:
     """Convert img to base64"""
-    print(Base64EncodeDecode.encode_image(img_path, data_tag=data_tag))
+    click.echo(Base64EncodeDecode.encode_image(img_path, data_tag=data_tag))
 
 
 @click.group(name="b64")

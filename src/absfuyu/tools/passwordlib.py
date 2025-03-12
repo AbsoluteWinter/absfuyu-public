@@ -3,13 +3,13 @@ Absfuyu: Passwordlib
 --------------------
 Password library
 
-Version: 5.0.0
-Date updated: 22/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 """
 
 # Module level
 # ---------------------------------------------------------------------------
-__all__ = ["PasswordGenerator", "TOTP"]
+__all__ = ["PasswordGenerator", "PasswordHash", "TOTP"]
 
 
 # Library
@@ -21,11 +21,12 @@ import re
 from typing import ClassVar, Literal, NamedTuple
 from urllib.parse import quote, urlencode
 
-from absfuyu.core import BaseClass, deprecated, versionadded
+from absfuyu.core.baseclass import BaseClass
+from absfuyu.core.docstring import deprecated, versionadded
 from absfuyu.dxt import DictExt, Text
-from absfuyu.general.generator import Charset, Generator
 from absfuyu.logger import logger
 from absfuyu.pkg_data import DataList, DataLoader
+from absfuyu.tools.generator import Charset, Generator
 from absfuyu.util import set_min
 
 
@@ -88,6 +89,18 @@ def _password_check(password: str) -> bool:
 # Class
 # ---------------------------------------------------------------------------
 class PasswordHash(NamedTuple):
+    """
+    Password hash
+
+    Parameters
+    ----------
+    salt : bytes
+        Salt
+
+    key : bytes
+        Key
+    """
+
     salt: bytes
     key: bytes
 
@@ -102,7 +115,17 @@ class PasswordGenerator(BaseClass):
     @staticmethod
     def password_hash(password: str) -> PasswordHash:
         """
-        Generate hash for password
+        Generate hash for password.
+
+        Parameters
+        ----------
+        password : str
+            Password string
+
+        Returns
+        -------
+        PasswordHash
+            Password hash contains salt and key
         """
         salt = os.urandom(32)
         key = hashlib.pbkdf2_hmac(
@@ -116,7 +139,19 @@ class PasswordGenerator(BaseClass):
 
     @staticmethod
     def password_check(password: str) -> dict:
-        """Check password's characteristic"""
+        """
+        Check password's characteristic.
+
+        Parameters
+        ----------
+        password : str
+            Password string
+
+        Returns
+        -------
+        dict
+            Password's characteristic.
+        """
         data = Text(password).analyze()
         data = DictExt(data).apply(lambda x: True if x > 0 else False)  # type: ignore
         data.__setitem__("length", len(password))
@@ -131,7 +166,7 @@ class PasswordGenerator(BaseClass):
         include_special: bool = True,
     ) -> str:
         r"""
-        Generate a random password
+        Generate a random password.
 
         Parameters
         ----------
@@ -141,13 +176,13 @@ class PasswordGenerator(BaseClass):
             | (Default: ``8``)
 
         include_uppercase : bool
-            Include uppercase character in the password (Default: ``True``)
+            Include uppercase character in the password, by default ``True``
 
         include_number : bool
-            Include digit character in the password (Default: ``True``)
+            Include digit character in the password, by default ``True``
 
         include_special : bool
-            Include special character in the password (Default: ``True``)
+            Include special character in the password, by default ``True``
 
         Returns
         -------
@@ -205,16 +240,16 @@ class PasswordGenerator(BaseClass):
         Parameters
         ----------
         num_of_blocks : int
-            Number of word used (Default: ``5``)
+            Number of word used, by default ``5``
 
         block_divider : str
-            Character symbol that between each word (Default: ``"-"``)
+            Character symbol that between each word, by default ``"-"``
 
         first_letter_cap : bool
-            Capitalize first character of each word (Default: ``True``)
+            Capitalize first character of each word, by default ``True``
 
         include_number : bool
-            Add number to the end of each word (Default: ``True``)
+            Add number to the end of each word, by default ``True``
 
         custom_word_list : list[str] | None
             Custom word list for passphrase generation, by default uses a list of 360K+ words
@@ -255,6 +290,33 @@ class PasswordGenerator(BaseClass):
 class TOTP(BaseClass):
     """
     A class to represent a Time-based One-Time Password (TOTP) generator.
+
+    Parameters
+    ----------
+    secret : str
+        The shared secret key used to generate the TOTP.
+
+    name : str, optional
+        | The name associated with the TOTP.
+        | If not provided, by default ``"None"``.
+
+    issuer : str, optional
+        The issuer of the TOTP.
+
+    algorithm : Literal["SHA1", "SHA256", "SHA512"], optional
+        | The hashing algorithm used to generate the TOTP.
+        | Must be one of ``"SHA1"``, ``"SHA256"``, or ``"SHA512"``.
+        | By default ``"SHA1"``.
+
+    digit : int, optional
+        | The number of digits in the generated TOTP.
+        | Must be greater than 0.
+        | By default ``6``.
+
+    period : int, optional
+        | The time step in seconds for TOTP generation.
+        | Must be greater than 0.
+        | by default ``30``.
     """
 
     URL_SCHEME: ClassVar[str] = "otpauth://totp/"
@@ -277,23 +339,26 @@ class TOTP(BaseClass):
             The shared secret key used to generate the TOTP.
 
         name : str, optional
-            The name associated with the TOTP. If not provided, defaults to ``"None"``.
+            | The name associated with the TOTP.
+            | If not provided, by default ``"None"``.
 
         issuer : str, optional
             The issuer of the TOTP.
 
         algorithm : Literal["SHA1", "SHA256", "SHA512"], optional
-            The hashing algorithm used to generate the TOTP.
-            Must be one of ``"SHA1"``, ``"SHA256"``, or ``"SHA512"``.
-            Defaults to ``"SHA1"``.
+            | The hashing algorithm used to generate the TOTP.
+            | Must be one of ``"SHA1"``, ``"SHA256"``, or ``"SHA512"``.
+            | By default ``"SHA1"``.
 
         digit : int, optional
-            The number of digits in the generated TOTP. Must be greater than 0.
-            Defaults to ``6``.
+            | The number of digits in the generated TOTP.
+            | Must be greater than 0.
+            | By default ``6``.
 
         period : int, optional
-            The time step in seconds for TOTP generation. Must be greater than 0.
-            Defaults to ``30``.
+            | The time step in seconds for TOTP generation.
+            | Must be greater than 0.
+            | by default ``30``.
         """
         self.secret = secret.upper()
         self.name = name if name else "None"

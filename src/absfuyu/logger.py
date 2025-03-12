@@ -3,8 +3,8 @@ Absfuyu: Logger
 ---------------
 Custom Logger Module
 
-Version: 5.0.0
-Date updated: 25/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 
 Usage:
 ------

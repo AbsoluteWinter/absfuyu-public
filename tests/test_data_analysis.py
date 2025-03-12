@@ -1,8 +1,8 @@
 """
 Test: Data Analysis
 
-Version: 5.0.0
-Date updated: 22/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 """
 
 import random
@@ -16,8 +16,9 @@ except ImportError:
     np = pytest.importorskip("numpy")
     pd = pytest.importorskip("pandas")
 
-from absfuyu.extra.data_analysis import DADF, CityData, SplittedDF
-from absfuyu.general.generator import Charset, Generator
+from absfuyu.extra.da.dadf import DADF
+from absfuyu.extra.da.dadf_base import CityData, SplittedDF
+from absfuyu.tools.generator import Charset, Generator
 
 SAMPLE_SIZE = 100
 sample_city_data = CityData._sample_city_data(size=SAMPLE_SIZE)
@@ -53,8 +54,14 @@ def sample_df_3():
 
 
 # MARK: test
+class TestDataAnalystDataFrameBase: ...
+
+
+class TestSplittedDF: ...
+
+
 class TestDADF:
-    """absfuyu.extensions.extra.data_analysis.DADF"""
+    """absfuyu.extra.da.dadf.DADF"""
 
     # Drop cols
     def test_drop_rightmost(self, sample_df: DADF) -> None:
@@ -156,3 +163,80 @@ class TestDADF:
         sample_df_3.convert_city("city", city_list=sample_city_data)
         new_num_of_cols = sample_df_3.shape[1]
         assert (new_num_of_cols - original_num_of_cols) == 2
+
+    # Diff
+    def test_get_different_rows(self) -> None:
+        df1 = DADF({"A": [1, 2, 3, 4], "B": [5, 6, 7, 8]})
+        df2 = DADF({"A": [1, 2, 3, 4], "B": [7, 6, 6, 8]})
+        assert df1.get_different_rows(df2).to_dict() == {
+            "A": {0: 1, 2: 3},
+            "B": {0: 7, 2: 6},
+        }
+
+    # Merge
+    def test_merge_left(self) -> None:
+        df1 = DADF(
+            {
+                "id": [1, 2, 5],
+                "name": ["Alice", "Bob", "Rich"],
+                "age": [20, 20, 20],
+            }
+        )
+        df2 = DADF(
+            {
+                "id": [1, 2, 3],
+                "age": [25, 30, 45],
+                "department": ["HR", "IT", "PM"],
+                "salary": [50000, 60000, 55000],
+            }
+        )
+        assert df1.merge_left(df2, on="id").fillna("N/A").to_dict() == {
+            "id": {0: 1, 1: 2, 2: 5},
+            "name": {0: "Alice", 1: "Bob", 2: "Rich"},
+            "age_x": {0: 20, 1: 20, 2: 20},
+            "age_y": {0: 25.0, 1: 30.0, 2: "N/A"},
+            "department": {0: "HR", 1: "IT", 2: "N/A"},
+            "salary": {0: 50000.0, 1: 60000.0, 2: "N/A"},
+        }
+        assert df1.merge_left(df2, on="id", columns=["salary"]).fillna(
+            "N/A"
+        ).to_dict() == {
+            "id": {0: 1, 1: 2, 2: 5},
+            "name": {0: "Alice", 1: "Bob", 2: "Rich"},
+            "age": {0: 25.0, 1: 30.0, 2: "N/A"},
+            "department": {0: "HR", 1: "IT", 2: "N/A"},
+            "salary": {0: 50000.0, 1: 60000.0, 2: "N/A"},
+        }
+
+    # Apply not null
+    def test_apply_notnull(self) -> None:
+        df = DADF({"A": [1, 2, 3], "B": [4, None, 6]})
+        assert df.apply_notnull("B", lambda _: "Replaced").fillna("N/A").to_dict() == {
+            "A": {0: 1, 1: 2, 2: 3},
+            "B": {0: "Replaced", 1: "N/A", 2: "Replaced"},
+        }
+
+    def test_apply_notnull_row(self) -> None:
+        df = DADF({"A": [None, 2, 3, 4], "B": [1, None, 3, 4], "C": [None, 2, None, 4]})
+        assert df.apply_notnull_row().fillna("N/A").to_dict() == {
+            "A": {0: "N/A", 1: 2.0, 2: 3.0, 3: 4.0},
+            "B": {0: 1.0, 1: "N/A", 2: 3.0, 3: 4.0},
+            "C": {0: "N/A", 1: 2.0, 2: "N/A", 3: 4.0},
+            "applied_row_null": {0: False, 1: False, 2: False, 3: True},
+        }
+        df = DADF({"A": [None, 2, 3, 4], "B": [1, None, 3, 4], "C": [None, 2, None, 4]})
+        assert df.apply_notnull_row(0, 1).fillna("N/A").to_dict() == {
+            "A": {0: "N/A", 1: 2.0, 2: 3.0, 3: 4.0},
+            "B": {0: 1.0, 1: "N/A", 2: 3.0, 3: 4.0},
+            "C": {0: "N/A", 1: 2.0, 2: "N/A", 3: 4.0},
+            "applied_row_null": {0: 0, 1: 0, 2: 0, 3: 1},
+        }
+        df = DADF({"A": [None, 2, 3, 4], "B": [1, None, 3, 4], "C": [None, 2, None, 4]})
+        assert df.apply_notnull_row(
+            lambda _: "n", lambda _: "y", col_name="mod"
+        ).fillna("N/A").to_dict() == {
+            "A": {0: "N/A", 1: 2.0, 2: 3.0, 3: 4.0},
+            "B": {0: 1.0, 1: "N/A", 2: 3.0, 3: 4.0},
+            "C": {0: "N/A", 1: 2.0, 2: "N/A", 3: 4.0},
+            "mod": {0: "n", 1: "n", 2: "n", 3: "y"},
+        }

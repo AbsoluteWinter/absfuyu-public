@@ -3,8 +3,8 @@ Absfuyu: Obfuscator
 -------------------
 Obfuscate code
 
-Version: 5.0.0
-Date updated: 25/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 """
 
 # Module level
@@ -22,17 +22,28 @@ from collections import deque
 from string import Template
 from typing import ClassVar
 
-from absfuyu.core import BaseClass, ShowAllMethodsMixin, versionadded
+from absfuyu.core.baseclass import BaseClass, ShowAllMethodsMixin
+from absfuyu.core.docstring import versionadded
 from absfuyu.dxt import Text
-from absfuyu.general.generator import Charset, Generator
 from absfuyu.logger import logger
+from absfuyu.tools.generator import Charset, Generator
 
 
 # Class
 # ---------------------------------------------------------------------------
 @versionadded("5.0.0")
 class StrShifter(BaseClass):
-    """Shift characters in a string by a specified number of positions."""
+    """
+    Shift characters in a string by a specified number of positions.
+
+    Parameters
+    ----------
+    str_to_shift : str
+        The string whose characters will be shifted.
+
+    shift_by : int, optional
+        The number of positions to shift the characters, by default ``5``.
+    """
 
     __slots__ = ("_str_to_shift", "shift_by")
 
@@ -100,7 +111,29 @@ class StrShifter(BaseClass):
 
 
 class Obfuscator(ShowAllMethodsMixin):
-    """Obfuscate code"""
+    """
+    Obfuscate code
+
+    Parameters
+    ----------
+    code : str
+        Code text
+
+    base64_only : bool, optional
+        - ``True``: encode in base64 form only
+        - ``False``: base64, compress, rot13 (default)
+
+    split_every : int, optional
+        Split the long line of code every ``x`` character.
+        Minimum is ``1``, by default ``60``
+
+    variable_length : int, optional
+        Length of variable name (when data string split).
+        Minimum is ``7``, by default ``12``
+
+    fake_data : bool, optional
+        Generate additional meaningless data, by default ``False``
+    """
 
     # Var
     LIB_BASE64_ONLY: ClassVar[list[str]] = ["base64"]
@@ -219,8 +252,13 @@ class Obfuscator(ShowAllMethodsMixin):
         """
         Convert text into base64 and then return a code that decode that base64 code
 
-        text: Code that need to convert
-        raw: Return hex form only
+        Parameters
+        ----------
+        text : str
+            Code that need to convert
+
+        raw : bool
+            Return hex form only, by default ``False``
         """
         b64_encode_codec = base64.b64encode(text.encode()).decode()
         b64_decode_codec = f"base64.b64decode('{b64_encode_codec}'.encode()).decode()"

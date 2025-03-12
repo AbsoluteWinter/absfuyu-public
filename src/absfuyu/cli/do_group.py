@@ -3,12 +3,17 @@ ABSFUYU CLI
 -----------
 Do
 
-Version: 5.0.0
-Date updated: 25/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 """
 
+# Module Package
+# ---------------------------------------------------------------------------
 __all__ = ["do_group"]
 
+
+# Library
+# ---------------------------------------------------------------------------
 import subprocess
 
 import click
@@ -17,10 +22,12 @@ from absfuyu import __title__
 from absfuyu.cli.color import COLOR
 from absfuyu.core import __package_feature__
 from absfuyu.tools.shutdownizer import ShutDownizer
-from absfuyu.util.zipped import Zipper
+from absfuyu.util.path import Directory
 from absfuyu.version import PkgVersion
 
 
+# CLI
+# ---------------------------------------------------------------------------
 @click.command()
 @click.option(
     "--force_update/--no-force-update",
@@ -64,9 +71,9 @@ def install(pkg: str) -> None:
 def unzip_files_in_dir(dir: str) -> None:
     """Unzip every files in directory"""
 
-    engine = Zipper(dir)
-    engine.unzip()
-    print("Done")
+    engine = Directory(dir)
+    engine.decompress()
+    click.echo(f"{COLOR['green']}Done!")
 
 
 @click.command(name="shutdown")

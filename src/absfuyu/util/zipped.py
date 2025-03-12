@@ -3,15 +3,13 @@ Absfuyu: Zipped
 ---------------
 Zipping stuff (deprecated soon, most features already in absfuyu.util.path.Directory)
 
-Version: 5.0.0
-Date updated: 22/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 """
 
 # Module level
 # ---------------------------------------------------------------------------
-__all__ = [
-    "Zipper",
-]
+__all__ = ["Zipper"]
 
 
 # Library
@@ -20,11 +18,13 @@ import shutil
 import zipfile
 from pathlib import Path
 
-from absfuyu.core import BaseClass, versionadded
+from absfuyu.core import BaseClass, deprecated, versionadded
 from absfuyu.logger import logger
 
 
+# Class
 # ---------------------------------------------------------------------------
+@deprecated("5.1.0", reason="Use ``absfuyu.util.path.Directory`` instead")
 class Zipper(BaseClass):
     """Zip file or folder"""
 

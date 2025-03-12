@@ -3,10 +3,12 @@ Absfuyu: Version
 ----------------
 Package versioning module
 
-Version: 5.0.0
-Date updated: 16/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 """
 
+# Module level
+# ---------------------------------------------------------------------------
 __all__ = [
     # Options
     "ReleaseOption",
@@ -18,42 +20,50 @@ __all__ = [
 ]
 
 
+# Library
+# ---------------------------------------------------------------------------
 import json
 import re
 import subprocess
-from typing import List, Tuple, TypedDict, Union
+from enum import StrEnum
+from typing import Self, TypedDict
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
+from absfuyu.core import BaseClass
 from absfuyu.logger import logger
 
 
-class ReleaseOption:
+# Class
+# ---------------------------------------------------------------------------
+class ReleaseOption(StrEnum):
     """
     ``MAJOR``, ``MINOR``, ``PATCH``
     """
 
-    MAJOR: str = "major"
-    MINOR: str = "minor"
-    PATCH: str = "patch"
+    MAJOR = "major"
+    MINOR = "minor"
+    PATCH = "patch"
 
-    def all_option() -> List[str]:  # type: ignore
+    @classmethod
+    def all_option(cls) -> list[str]:
         """Return a list of release options"""
-        return [__class__.MAJOR, __class__.MINOR, __class__.PATCH]  # type: ignore
+        return [cls.MAJOR.value, cls.MINOR.value, cls.PATCH.value]
 
 
-class ReleaseLevel:
+class ReleaseLevel(StrEnum):
     """
     ``FINAL``, ``DEV``, ``RC``
     """
 
-    FINAL: str = "final"
-    DEV: str = "dev"
-    RC: str = "rc"  # Release candidate
+    FINAL = "final"
+    DEV = "dev"
+    RC = "rc"  # Release candidate
 
-    def all_level() -> List[str]:  # type: ignore
+    @classmethod
+    def all_level(cls) -> list[str]:
         """Return a list of release levels"""
-        return [__class__.FINAL, __class__.DEV, __class__.RC]  # type: ignore
+        return [cls.FINAL.value, cls.DEV.value, cls.RC.value]
 
 
 class VersionDictFormat(TypedDict):
@@ -74,30 +84,36 @@ class VersionDictFormat(TypedDict):
     serial: int
 
 
-class Version:
+class Version(BaseClass):
     """Version"""
 
     def __init__(
         self,
-        major: Union[int, str],
-        minor: Union[int, str],
-        patch: Union[int, str],
+        major: int | str,
+        minor: int | str,
+        patch: int | str,
         release_level: str = ReleaseLevel.FINAL,
-        serial: Union[int, str] = 0,
+        serial: int | str = 0,
     ) -> None:
         """
         Create ``Version`` instance
 
-        :param major: Major change
-        :type major: int | str
-        :param minor: Minor change
-        :type minor: int | str
-        :param patch: Patch
-        :type patch: int | str
-        :param release_level: Release level: ``final``|``rc``|``dev``
-        :type release_level: str
-        :param serial: Serial for release level ``rc``|``dev``
-        :type serial: int | str
+        Parameters
+        ----------
+        major : int | str
+            Major change
+
+        minor : int | str
+            Minor change
+
+        patch : int | str
+            Patch
+
+        release_level : str, optional
+            Release level: ``final`` | ``rc`` | ``dev``, by default ``ReleaseLevel.FINAL``
+
+        serial : int | str, optional
+            Serial for release level ``rc`` | ``dev``, by default ``0``
         """
         self.major: int = major if isinstance(major, int) else int(major)
         self.minor: int = minor if isinstance(minor, int) else int(minor)
@@ -108,15 +124,16 @@ class Version:
     def __str__(self) -> str:
         return self.version
 
-    def __repr__(self) -> str:
-        if self.release_level.startswith(ReleaseLevel.FINAL):
-            return f"{self.__class__.__name__}(major={self.major}, minor={self.minor}, patch={self.patch})"
-        else:
-            return (
-                f"{self.__class__.__name__}("
-                f"major={self.major}, minor={self.minor}, patch={self.patch}, "
-                f"release_level={self.release_level}, serial={self.serial})"
-            )
+    # def __repr__(self) -> str:
+    #     cls_name = self.__class__.__name__
+    #     if self.release_level.startswith(ReleaseLevel.FINAL):
+    #         return f"{cls_name}(major={self.major}, minor={self.minor}, patch={self.patch})"
+    #     else:
+    #         return (
+    #             f"{cls_name}("
+    #             f"major={self.major}, minor={self.minor}, patch={self.patch}, "
+    #             f"release_level={self.release_level}, serial={self.serial})"
+    #         )
 
     def __format__(self, format_spec: str) -> str:
         """
@@ -166,8 +183,8 @@ class Version:
 
     @classmethod
     def from_tuple(
-        cls, iterable: Union[Tuple[int, int, int], Tuple[int, int, int, str, int]]
-    ):
+        cls, iterable: tuple[int, int, int] | tuple[int, int, int, str, int]
+    ) -> Self:
         """
         Convert to ``Version`` from a ``tuple``
 
@@ -203,7 +220,7 @@ class Version:
             raise ValueError("iterable must have len of 5 or 3")
 
     @classmethod
-    def from_str(cls, version_string: str):
+    def from_str(cls, version_string: str) -> Self:
         """
         Convert to ``Version`` from a ``str``
 

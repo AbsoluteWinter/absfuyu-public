@@ -3,8 +3,8 @@ Absfuyu: Core
 -------------
 Dummy functions when other libraries are unvailable
 
-Version: 5.0.0
-Date updated: 22/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 """
 
 # Module Package
@@ -12,6 +12,7 @@ Date updated: 22/02/2025 (dd/mm/yyyy)
 __all__ = [
     "tqdm",
     "unidecode",
+    "dummy_function",
 ]
 
 
@@ -23,8 +24,9 @@ from importlib import import_module
 # ---------------------------------------------------------------------------
 # tqdm wrapper
 try:
-    tqdm = import_module("tqdm").tqdm
-except ModuleNotFoundError:
+    _tqdm = import_module("tqdm")
+    tqdm = getattr(_tqdm, "tqdm")  # noqa
+except (ModuleNotFoundError, AttributeError):
 
     def tqdm(iterable, *args, **kwargs):
         """
@@ -36,8 +38,9 @@ except ModuleNotFoundError:
 
 # unidecode wrapper
 try:
-    unidecode = import_module("unidecode").unidecode
-except ModuleNotFoundError:
+    _unidecode = import_module("unidecode")
+    unidecode = getattr(_unidecode, "unidecode")  # noqa
+except (ModuleNotFoundError, AttributeError):
 
     def unidecode(*args, **kwargs):
         """
@@ -45,3 +48,13 @@ except ModuleNotFoundError:
         install package ``unidecode`` to fully use this feature
         """
         return args[0]
+
+
+# dummy
+def dummy_function(*args, **kwargs):
+    """This is a dummy function"""
+    if args:
+        return args[0]
+    if kwargs:
+        return kwargs[list(kwargs)[0]]
+    return None

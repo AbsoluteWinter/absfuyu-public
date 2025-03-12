@@ -35,7 +35,7 @@ help(absfuyu)
 
 ## Notable features
 
-**absfuyu.core**: Provides foundational components for additional functionalities.
+**absfuyu.core**: Provides base components for additional functionalities.
 
 ```python
 # Decorators that adds info to __doc__
@@ -51,6 +51,13 @@ from absfuyu.core.baseclass import AutoREPRMixin, ShowAllMethodsMixin
 from absfuyu.dxt import DictExt, IntExt, ListExt, Text
 for x in [DictExt, IntExt, ListExt, Text]:
     x.show_all_methods(print_result=1)
+```
+
+**absfuyu.tools.Inspector**: An object inspector
+
+```python
+from absfuyu.tools import Inspector
+print(Inspector(Inspector))
 ```
 
 There are many additional features available to explore.

@@ -3,8 +3,8 @@ Absfuyu: Data Extension
 -----------------------
 Extension for data type such as ``list``, ``str``, ``dict``, ...
 
-Version: 5.0.0
-Date updated: 22/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 
 Features:
 ---------

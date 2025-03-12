@@ -1,8 +1,8 @@
 """
 Test: Everything
 
-Version: 5.0.0
-Date updated: 25/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 """
 
 # Library
@@ -36,18 +36,29 @@ from absfuyu.core import (
     versionadded,
     versionchanged,
 )
-from absfuyu.core.baseclass import AutoREPRMixin, PositiveInitArgsMeta
+from absfuyu.core.baseclass import (
+    AutoREPRMixin,
+    MethodNPropertyList,
+    MethodNPropertyResult,
+    PositiveInitArgsMeta,
+)
 from absfuyu.core.baseclass2 import (
     PerformanceTrackingMeta,
     ShowAllMethodsMixinInspectVer,
     positive_class_init_args,
 )
-from absfuyu.core.decorator import dummy_decorator, dummy_decorator_with_args
+from absfuyu.core.decorator import (
+    add_subclass_methods_decorator,
+    dummy_decorator,
+    dummy_decorator_with_args,
+)
 from absfuyu.core.docstring import (
     _SPHINX_DOCS_TEMPLATE,
     SphinxDocstring,
     SphinxDocstringMode,
 )
+from absfuyu.core.dummy_func import dummy_function
+from absfuyu.core.typings import _CALLABLE, _CT, _N, _P, _R, _T, _Number
 from absfuyu.dxt import (
     DictAnalyzeResult,
     DictBoolFalse,
@@ -62,13 +73,23 @@ from absfuyu.dxt import (
 )
 from absfuyu.extra import is_loaded
 from absfuyu.extra.beautiful import BeautifulOutput  # Has rich
-from absfuyu.extra.data_analysis import (  # Has pandas, numpy
+from absfuyu.extra.da.dadf import (  # Has pandas, numpy
+    DADF,
+    DataAnalystDataFrameCityMixin,
+    DataAnalystDataFrameColumnMethodMixin,
+    DataAnalystDataFrameDateMixin,
+    DataAnalystDataFrameInfoMixin,
+    DataAnalystDataFrameNAMixin,
+    DataAnalystDataFrameOtherMixin,
+    DataAnalystDataFrameRowMethodMixin,
+)
+from absfuyu.extra.da.dadf_base import (  # Has pandas, numpy
     CityData,
-    DataAnalystDataFrame,
-    MatplotlibFormatString,
-    PLTFormatString,
+    DataAnalystDataFrameBase,
     SplittedDF,
-    _DictToAtrr,
+)
+from absfuyu.extra.da.mplt import MatplotlibFormatString, _PLTFormatString
+from absfuyu.extra.data_analysis import (  # Has pandas, numpy
     compare_2_list,
     equalize_df,
     rename_with_dict,
@@ -86,7 +107,6 @@ from absfuyu.general.content import (  # Has unidecode
     ContentLoader,
     LoadedContent,
 )
-from absfuyu.general.generator import Charset, Generator
 from absfuyu.general.human import BloodType, Human, Person
 from absfuyu.general.shape import (
     Circle,
@@ -122,6 +142,8 @@ from absfuyu.tools.converter import (
     Str2Pixel,
     Text2Chemistry,
 )
+from absfuyu.tools.generator import Charset, Generator
+from absfuyu.tools.inspector import Inspector
 from absfuyu.tools.keygen import Keygen
 from absfuyu.tools.obfuscator import Obfuscator, StrShifter
 from absfuyu.tools.passwordlib import TOTP, PasswordGenerator, PasswordHash
@@ -143,7 +165,18 @@ from absfuyu.util import (
 from absfuyu.util.api import APIRequest, ping_windows  # Has requests
 from absfuyu.util.json_method import JsonFile
 from absfuyu.util.lunar import LunarCalendar
-from absfuyu.util.path import Directory, SaveFileAs
+from absfuyu.util.path import (
+    Directory,
+    DirectoryArchiverMixin,
+    DirectoryBase,
+    DirectoryBasicOperationMixin,
+    DirectoryInfo,
+    DirectoryInfoMixin,
+    DirectoryOrganizerMixin,
+    DirectoryTreeMixin,
+    FileOrFolderWithModificationTime,
+    SaveFileAs,
+)
 from absfuyu.util.performance import Checker, function_debug, measure_performance, retry
 from absfuyu.util.shorten_number import (
     CommonUnitSuffixesFactory,
@@ -151,7 +184,13 @@ from absfuyu.util.shorten_number import (
     UnitSuffixFactory,
     shorten_number,
 )
-from absfuyu.util.zipped import Zipper
+from absfuyu.util.text_table import (
+    BoxDrawingCharacter,
+    BoxDrawingCharacterBold,
+    BoxDrawingCharacterDashed,
+    BoxDrawingCharacterDouble,
+    OneColumnTableMaker,
+)
 from absfuyu.version import (
     Bumper,
     PkgVersion,

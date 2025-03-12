@@ -1,8 +1,8 @@
 """
 Test: Generator
 
-Version: 5.0.0
-Date updated: 16/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 """
 
 import random
@@ -12,7 +12,7 @@ from math import comb
 
 import pytest
 
-from absfuyu.general.generator import Charset, Generator
+from absfuyu.tools.generator import Charset, Generator
 
 
 class TestGenerator:

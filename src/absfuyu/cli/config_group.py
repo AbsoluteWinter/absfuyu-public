@@ -3,18 +3,25 @@ ABSFUYU CLI
 -----------
 Config
 
-Version: 5.0.0
-Date updated: 16/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 """
 
+# Module Package
+# ---------------------------------------------------------------------------
 __all__ = ["config_group"]
 
+
+# Library
+# ---------------------------------------------------------------------------
 import click
 
 from absfuyu.cli.color import COLOR
 from absfuyu.config import ABSFUYU_CONFIG
 
 
+# CLI
+# ---------------------------------------------------------------------------
 @click.command()
 @click.option(
     "--setting",

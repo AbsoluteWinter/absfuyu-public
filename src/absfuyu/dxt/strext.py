@@ -3,8 +3,8 @@ Absfuyu: Data Extension
 -----------------------
 str extension
 
-Version: 5.0.0
-Date updated: 25/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 """
 
 # Module Package
@@ -18,8 +18,8 @@ import random
 from typing import NotRequired, Self, TypedDict
 
 from absfuyu.core import ShowAllMethodsMixin, deprecated, versionadded, versionchanged
-from absfuyu.general.generator import Charset, Generator
 from absfuyu.logger import logger
+from absfuyu.tools.generator import Charset, Generator
 from absfuyu.util import set_min_max
 
 

@@ -3,8 +3,8 @@ Absfuyu: Data Extension
 -----------------------
 int extension
 
-Version: 5.0.0
-Date updated: 25/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 """
 
 # Module Package
@@ -18,7 +18,7 @@ import math
 from collections import Counter
 from typing import Any, Self
 
-from absfuyu.core import ShowAllMethodsMixin, versionchanged
+from absfuyu.core import ShowAllMethodsMixin, versionadded, versionchanged
 from absfuyu.dxt.dxt_support import DictBoolTrue
 
 
@@ -584,3 +584,31 @@ class IntExt(ShowAllMethodsMixin, int):
 
         output["characteristic"] = characteristic
         return output  # type: ignore
+
+    @versionadded("5.1.0")
+    def split(self, parts: int) -> list[int]:
+        """
+        Evenly split the number into ``parts`` parts
+
+        Parameters
+        ----------
+        parts : int
+            Split by how many parts
+
+        Returns
+        -------
+        list[int]
+            List of evenly splitted numbers
+
+
+        Example:
+        --------
+        >>> IntExt(10).split(4)
+        [2, 2, 3, 3]
+        """
+        p = max(1, parts)
+        if p == 1:
+            return [int(self)]
+
+        quotient, remainder = divmod(self, p)
+        return [quotient + (i >= (p - remainder)) for i in range(p)]

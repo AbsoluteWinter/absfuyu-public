@@ -3,8 +3,8 @@ Absufyu: Converter
 ------------------
 Convert stuff
 
-Version: 5.0.0
-Date updated: 22/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 
 Feature:
 --------
@@ -16,9 +16,9 @@ Feature:
 # Module level
 # ---------------------------------------------------------------------------
 __all__ = [
+    "Base64EncodeDecode",
     "Text2Chemistry",
     "Str2Pixel",
-    "Base64EncodeDecode",
 ]
 
 
@@ -32,7 +32,8 @@ from itertools import chain, combinations
 from pathlib import Path
 from typing import Self
 
-from absfuyu.core import BaseClass, CLITextColor, versionadded
+from absfuyu.core.baseclass import BaseClass, CLITextColor
+from absfuyu.core.docstring import versionadded
 from absfuyu.logger import logger
 from absfuyu.pkg_data import DataList, DataLoader
 from absfuyu.util import set_min
@@ -84,14 +85,43 @@ class Base64EncodeDecode(BaseClass):
 
 
 class ChemistryElement(BaseClass):
-    """Chemistry Element"""
+    """
+    Chemistry Element
+
+    Parameters
+    ----------
+    name : str
+        Element name
+
+    number : int
+        Order in periodic table
+
+    symbol : str
+        Short symbol of element
+
+    atomic_mass : float
+        Atomic mass of element
+    """
+
+    __slots__ = ("name", "number", "symbol", "atomic_mass")
 
     def __init__(self, name: str, number: int, symbol: str, atomic_mass: float) -> None:
         """
-        name: element name
-        number: order in periodic table
-        symbol: short symbol of element
-        atomic_mass: atomic mass of element
+        Chemistry Element
+
+        Parameters
+        ----------
+        name : str
+            Element name
+
+        number : int
+            Order in periodic table
+
+        symbol : str
+            Short symbol of element
+
+        atomic_mass : float
+            Atomic mass of element
         """
         self.name = name
         self.number = number
@@ -105,23 +135,28 @@ class ChemistryElement(BaseClass):
         """
         Output content to dict
 
-        :rtype: dict[str, str | int | float]
+        Returns
+        -------
+        dict[str, str | int | float]
+            Dict version of element
         """
-        return {
-            "name": self.name,
-            "number": self.number,
-            "symbol": self.symbol,
-            "atomic_mass": self.atomic_mass,
-        }
+        # return {"name": self.name, "number": self.number, "symbol": self.symbol, "atomic_mass": self.atomic_mass}
+        return {x: getattr(self, x) for x in self.__slots__}
 
     @classmethod
     def from_dict(cls, data: dict[str, str | int | float]) -> Self:
         """
         Convert from ``dict`` data
 
-        :param data: Dict data
-        :type data: dict[str, str | int | float]
-        :rtype: ChemistryElement
+        Parameters
+        ----------
+        data : dict[str, str | int | float]
+            Dict data
+
+        Returns
+        -------
+        Self
+            ChemistryElement
         """
         return cls(
             name=data["name"],  # type: ignore
@@ -150,7 +185,10 @@ class Text2Chemistry(BaseClass):
         """
         Characters that can not be converted (unvailable chemistry symbol)
 
-        :rtype: set[str]
+        Returns
+        -------
+        set[str]
+            Set of unvailable characters
         """
         base = set(string.ascii_lowercase)
         available = set(
@@ -164,10 +202,20 @@ class Text2Chemistry(BaseClass):
         """
         Convert text to chemistry symbol
 
-        :param text: desired text
-        :type text: str
-        :returns: Converted text (empty list when failed to convert)
-        :rtype: list
+        Parameters
+        ----------
+        text : str
+            Desired text
+
+        Returns
+        -------
+        list[list[ChemistryElement]] | list
+            Converted text (empty list when failed to convert)
+
+        Raises
+        ------
+        ValueError
+            When text contains digit, whitespaces, ...
         """
         # Check if `text` is a word (without digits)
         is_word_pattern = r"^[a-zA-Z]+$"
@@ -267,7 +315,21 @@ class Text2Chemistry(BaseClass):
 
 
 class Str2Pixel(BaseClass):
-    """Convert str into pixel"""
+    """
+    Convert str into pixel
+
+    Parameters
+    ----------
+    str_data : str
+        | Pixel string data (Format: ``<number_of_pixel><color_code>``)
+        | Example: ``50w20b`` = 50 white pixels and 20 black pixels
+
+    pixel_size : int, optional
+        Pixel size, by default ``2``
+
+    pixel_symbol_overwrite : str | None, optional
+        Overwrite pixel symbol, by default ``None``
+    """
 
     PIXEL = "\u2588"
 
@@ -279,11 +341,13 @@ class Str2Pixel(BaseClass):
         pixel_symbol_overwrite: str | None = None,
     ) -> None:
         """
+        Convert str into pixel
+
         Parameters
         ----------
         str_data : str
-            Pixel string data (Format: ``<number_of_pixel><color_code>``)
-            Example: 50w20b = 50 white pixels and 20 black pixels
+            | Pixel string data (Format: ``<number_of_pixel><color_code>``)
+            | Example: ``50w20b`` = 50 white pixels and 20 black pixels
 
         pixel_size : int, optional
             Pixel size, by default ``2``
@@ -307,7 +371,8 @@ class Str2Pixel(BaseClass):
         return [x for y in zip(num, char) for x in y]
 
     def convert(self, line_break: bool = True) -> str:
-        """Convert data into pixel
+        """
+        Convert data into pixel
 
         Parameters
         ----------

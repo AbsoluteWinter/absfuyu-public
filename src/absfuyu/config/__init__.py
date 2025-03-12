@@ -3,8 +3,8 @@ Absfuyu: Configuration
 ----------------------
 Package configuration module
 
-Version: 5.0.0
-Date updated: 22/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 """
 
 # Module level

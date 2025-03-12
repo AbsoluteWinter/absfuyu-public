@@ -3,8 +3,8 @@ Absfuyu: Path
 -------------
 Path related
 
-Version: 5.0.0
-Date updated: 22/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 
 Feature:
 --------
@@ -16,8 +16,15 @@ Feature:
 # ---------------------------------------------------------------------------
 __all__ = [
     # Main
+    "DirectoryBase",
     "Directory",
     "SaveFileAs",
+    # Mixin
+    "DirectoryInfoMixin",
+    "DirectoryBasicOperationMixin",
+    "DirectoryArchiverMixin",
+    "DirectoryOrganizerMixin",
+    "DirectoryTreeMixin",
     # Support
     "FileOrFolderWithModificationTime",
     "DirectoryInfo",
@@ -32,9 +39,11 @@ import shutil
 from datetime import datetime
 from functools import partial
 from pathlib import Path
-from typing import Any, Literal, NamedTuple
+from typing import Any, ClassVar, Literal, NamedTuple
 
-from absfuyu.core import versionadded
+from absfuyu.core.baseclass import BaseClass
+from absfuyu.core.decorator import add_subclass_methods_decorator
+from absfuyu.core.docstring import deprecated, versionadded, versionchanged
 from absfuyu.logger import logger
 
 
@@ -53,21 +62,40 @@ class FileOrFolderWithModificationTime(NamedTuple):
     modification_time: datetime
 
 
+@deprecated(
+    "5.1.0", reason="Support for ``DirectoryInfoMixin`` which is also deprecated"
+)
 @versionadded("3.3.0")
 class DirectoryInfo(NamedTuple):
     """
     Information of a directory
     """
 
-    files: int
-    folders: int
     creation_time: datetime
     modification_time: datetime
 
 
-# Class - Directory | version 3.4.0: Remake Directory into modular class
+# Class - Directory
 # ---------------------------------------------------------------------------
-class DirectoryBase:
+@add_subclass_methods_decorator
+class DirectoryBase(BaseClass):
+    """
+    Directory - Base
+
+    Parameters
+    ----------
+    source_path : str | Path
+        Source folder
+
+    create_if_not_exist : bool
+        Create directory when not exist,
+        by default ``False``
+    """
+
+    # Custom attribute
+    _METHOD_INCLUDE: ClassVar[bool] = True  # Include in DIR_METHODS
+    SUBCLASS_METHODS: ClassVar[dict[str, list[str]]] = {}
+
     def __init__(
         self,
         source_path: str | Path,
@@ -80,80 +108,53 @@ class DirectoryBase:
             Source folder
 
         create_if_not_exist : bool
-            Create directory when not exist
-            (Default: ``False``)
+            Create directory when not exist,
+            by default ``False``
         """
         self.source_path = Path(source_path)
-        if create_if_not_exist:
-            if not self.source_path.exists():
+        if not self.source_path.exists():
+            if create_if_not_exist:
                 self.source_path.mkdir(exist_ok=True, parents=True)
+            else:
+                raise FileNotFoundError("Directory not existed")
 
-    def __str__(self) -> str:
-        return self.source_path.__str__()
 
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.source_path})"
+class DirectoryInfoMixin(DirectoryBase):
+    """
+    Directory - Info
 
-    def __format__(self, __format_spec: str) -> str:
-        """
-        Change format of an object.
-        Avaiable option: ``info``
+    - Quick info
+    """
 
-        Usage
-        -----
-        >>> print(f"{<object>:<format_spec>}")
-        >>> print(<object>.__format__(<format_spec>))
-        >>> print(format(<object>, <format_spec>))
-        """
-        # Show quick info
-        if __format_spec.lower().startswith("info"):
-            return self.quick_info().__repr__()
-
-        # No format spec
-        return self.__repr__()
-
-    # Everything
-    @property
-    @versionadded("3.3.0")
-    def everything(self) -> list[Path]:
-        """
-        Every folders and files in this Directory
-        """
-        return list(x for x in self.source_path.glob("**/*"))
-
-    @versionadded("3.3.0")
-    def _every_folder(self) -> list[Path]:
-        """
-        Every folders in this Directory
-        """
-        return list(x for x in self.source_path.glob("**/*") if x.is_dir())
-
-    @versionadded("3.3.0")
-    def _every_file(self) -> list[Path]:
-        """
-        Every folders in this Directory
-        """
-        return list(x for x in self.source_path.glob("**/*") if x.is_file())
-
-    # Quick information
+    @deprecated("5.1.0", reason="Not efficient")
     @versionadded("3.3.0")
     def quick_info(self) -> DirectoryInfo:
         """
         Quick information about this Directory
 
-        :rtype: DirectoryInfo
+        Returns
+        -------
+        DirectoryInfo
+            DirectoryInfo
         """
         source_stat: os.stat_result = self.source_path.stat()
         out = DirectoryInfo(
-            files=len(self._every_file()),
-            folders=len(self._every_folder()),
             creation_time=datetime.fromtimestamp(source_stat.st_ctime),
             modification_time=datetime.fromtimestamp(source_stat.st_mtime),
         )
         return out
 
 
-class DirectoryBasicOperation(DirectoryBase):
+class DirectoryBasicOperationMixin(DirectoryBase):
+    """
+    Directory - Basic operation
+
+    - Rename
+    - Copy
+    - Move
+    - Delete
+    """
+
     # Rename
     def rename(self, new_name: str) -> None:
         """
@@ -214,7 +215,7 @@ class DirectoryBasicOperation(DirectoryBase):
                 shutil.move(self.source_path, Path(dst))
             logger.debug(f"Moving to {dst}...DONE")
 
-        except shutil.Error as e:  # File already exists
+        except OSError as e:  # File already exists
             logger.error(e)
             logger.debug("Overwriting file...")
             if content_only:
@@ -316,31 +317,54 @@ class DirectoryBasicOperation(DirectoryBase):
         except Exception as e:
             logger.error(f"Removing {self.source_path}...FAILED\n{e}")
 
-    # Zip
+
+class DirectoryArchiverMixin(DirectoryBase):
+    """
+    Directory - Archiver/Compress
+
+    - Compress
+    - Decompress
+    - Register extra zip format <staticmethod>
+    """
+
+    @versionchanged("5.1.0", reason="Update funcionality (new parameter)")
     def compress(
-        self, *, format: Literal["zip", "tar", "gztar", "bztar", "xztar"] = "zip"
+        self,
+        format: Literal["zip", "tar", "gztar", "bztar", "xztar"] = "zip",
+        delete_after_compress: bool = False,
+        move_inside: bool = True,
     ) -> Path | None:
         """
         Compress the directory (Default: Create ``.zip`` file)
 
         Parameters
         ----------
-        format : Literal["zip", "tar", "gztar", "bztar", "xztar"]
+        format : Literal["zip", "tar", "gztar", "bztar", "xztar"], optional
+            By default ``"zip"``
             - ``zip``: ZIP file (if the ``zlib`` module is available).
             - ``tar``: Uncompressed tar file. Uses POSIX.1-2001 pax format for new archives.
             - ``gztar``: gzip'ed tar-file (if the ``zlib`` module is available).
             - ``bztar``: bzip2'ed tar-file (if the ``bz2`` module is available).
             - ``xztar``: xz'ed tar-file (if the ``lzma`` module is available).
 
+        delete_after_compress : bool, optional
+            Delete directory after compress, by default ``False``
+
+        move_inside : bool, optional
+            Move the commpressed file inside the directory,
+            by default ``True``
+
         Returns
         -------
         Path
             Compressed path
+
         None
             When fail to compress
         """
         logger.debug(f"Zipping {self.source_path}...")
         try:
+            # Zip
             # zip_name = self.source_path.parent.joinpath(self.source_path.name).__str__()
             # shutil.make_archive(zip_name, format=format, root_dir=self.source_path)
             zip_path = shutil.make_archive(
@@ -348,26 +372,85 @@ class DirectoryBasicOperation(DirectoryBase):
             )
             logger.debug(f"Zipping {self.source_path}...DONE")
             logger.debug(f"Path: {zip_path}")
+
+            # Del
+            if delete_after_compress:
+                move_inside = False
+                shutil.rmtree(self.source_path)
+
+            # Move
+            if move_inside:
+                zf = Path(zip_path)
+                _move_path = self.source_path.joinpath(zf.name)
+                if _move_path.exists():
+                    _move_path.unlink(missing_ok=True)
+                _move = zf.rename(_move_path)
+                return _move
+
             return Path(zip_path)
-        except Exception as e:
+        except (FileExistsError, OSError) as e:
             logger.error(f"Zipping {self.source_path}...FAILED\n{e}")
             return None
 
+    @staticmethod
+    @versionadded("5.1.0")
+    def register_extra_zip_format() -> None:
+        """This register extra extension for zipfile"""
+        extra_extension = [".zip", ".cbz"]
+        shutil.unregister_unpack_format("zip")
+        shutil.register_unpack_format(
+            "zip",
+            extra_extension,
+            shutil._unpack_zipfile,  # type: ignore
+            description="ZIP file",
+        )
 
-class DirectoryTree(DirectoryBase):
+    @versionadded("5.1.0")
+    def decompress(
+        self,
+        format: Literal["zip", "tar", "gztar", "bztar", "xztar"] | None = None,
+        delete_after_done: bool = False,
+    ) -> None:
+        """
+        Decompress compressed file in directory (first level only)
+
+        Parameters
+        ----------
+        format : Literal["zip", "tar", "gztar", "bztar", "xztar"] | None, optional
+            By default ``None``
+            - ``zip``: ZIP file (if the ``zlib`` module is available).
+            - ``tar``: Uncompressed tar file. Uses POSIX.1-2001 pax format for new archives.
+            - ``gztar``: gzip'ed tar-file (if the ``zlib`` module is available).
+            - ``bztar``: bzip2'ed tar-file (if the ``bz2`` module is available).
+            - ``xztar``: xz'ed tar-file (if the ``lzma`` module is available).
+
+        delete_after_done : bool, optional
+            Delete compressed file when extracted, by default ``False``
+        """
+        # Register extra extension
+        self.register_extra_zip_format()
+
+        # Decompress first level only
+        for path in self.source_path.glob("*"):
+            try:
+                shutil.unpack_archive(
+                    path, path.parent.joinpath(path.stem), format=format
+                )
+                if delete_after_done and path.is_file():
+                    path.unlink(missing_ok=True)
+            except OSError:
+                continue
+
+
+class DirectoryOrganizerMixin(DirectoryBase):
+    """
+    Directory - File organizer - SOON
+    """
+
     pass
 
 
-class Directory(DirectoryBasicOperation, DirectoryTree):
-    """
-    Some shortcuts for directory
-
-    - list_structure
-    - delete, rename, copy, move
-    - zip
-    - quick_info
-    """
-
+class DirectoryTreeMixin(DirectoryBase):
     # Directory structure
     def _list_dir(self, *ignore: str) -> list[Path]:
         """
@@ -504,10 +587,41 @@ class Directory(DirectoryBasicOperation, DirectoryTree):
         return self.list_structure("__pycache__", ".pyc")
 
 
+class Directory(
+    DirectoryTreeMixin,
+    DirectoryOrganizerMixin,
+    DirectoryArchiverMixin,
+    DirectoryBasicOperationMixin,
+    DirectoryInfoMixin,
+):
+    """
+    Some shortcuts for directory
+
+    Parameters
+    ----------
+    source_path : str | Path
+        Source folder
+
+    create_if_not_exist : bool
+        Create directory when not exist,
+        by default ``False``
+
+
+    Example:
+    --------
+    >>> # For a list of method
+    >>> Directory.SUBCLASS_METHODS
+    """
+
+    pass
+
+
 # Class - SaveFileAs
 # ---------------------------------------------------------------------------
 class SaveFileAs:
-    """File as multiple file type"""
+    """
+    File as multiple file type
+    """
 
     def __init__(self, data: Any, *, encoding: str | None = "utf-8") -> None:
         """
@@ -552,9 +666,3 @@ class SaveFileAs:
     #     from absfuyu.util.json_method import JsonFile
     #     temp = JsonFile(path, sort_keys=False)
     #     temp.save_json()
-
-
-# Dev and Test new feature before get added to the main class
-# ---------------------------------------------------------------------------
-class _NewDirFeature(Directory):
-    pass

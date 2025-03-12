@@ -3,8 +3,8 @@ Absfuyu: Shorten number
 -----------------------
 Short number base on suffixes
 
-Version: 5.0.0
-Date updated: 24/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 """
 
 # Module level
@@ -156,11 +156,28 @@ class Decimal:
     """
     Shorten large number
 
-    :param original_value: Value to shorten
-    :param base: Short by base (must be > 0)
-    :param suffixes: List of suffixes to use (ascending order)
-    :param factory: ``UnitSuffixFactory`` to use (will overwrite ``base`` and ``suffixes``)
-    :param suffix_full_name: Use suffix full name (default: False)
+    Parameters
+    ----------
+    original_value : int | float
+        Value to shorten
+
+    base : int
+        Short by base (must be > 0)
+
+    suffixes : list[str]
+        List of suffixes to use (ascending order)
+
+    factory : UnitSuffixFactory | None
+        ``UnitSuffixFactory`` to use
+        (will overwrite ``base`` and ``suffixes``)
+
+    suffix_full_name : bool
+        Use suffix full name (available with ``UnitSuffixFactory``), by default ``False``
+
+    Returns
+    -------
+    Decimal
+        Decimal instance
     """
 
     original_value: int | float = field(repr=False)
@@ -173,6 +190,7 @@ class Decimal:
     suffix: str = field(init=False)
 
     def __post_init__(self) -> None:
+        self.base = max(1, self.base)  # Make sure that base >= 1
         self._get_factory()
         self.value, self.suffix = self._convert_decimal()
 
@@ -228,9 +246,21 @@ class Decimal:
         """
         Convert to string
 
-        :param decimal: Round up to which decimal
-        :param separator: Character between value and suffix, default: ``" "``
-        :param float_only: Returns value as <float> instead of <int> when ``decimal = 0``
+        Parameters
+        ----------
+        decimal : int, optional
+            Round up to which decimal, by default ``2``
+
+        separator : str, optional
+            Character between value and suffix, by default ``" "``
+
+        float_only : bool, optional
+            Returns value as <float> instead of <int> when ``decimal = 0``, by default ``True``
+
+        Returns
+        -------
+        str
+            Decimal string
         """
         val = self.value.__round__(decimal)
         formatted_value = f"{val:,}"

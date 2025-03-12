@@ -3,8 +3,8 @@ Absfuyu: Data Extension
 -----------------------
 list extension
 
-Version: 5.0.0
-Date updated: 25/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 """
 
 # Module Package
@@ -22,6 +22,7 @@ from itertools import accumulate, chain, groupby
 from typing import Any, Self
 
 from absfuyu.core import ShowAllMethodsMixin, deprecated
+from absfuyu.core.docstring import versionadded
 from absfuyu.util import set_min, set_min_max
 
 
@@ -323,7 +324,7 @@ class ListExt(ShowAllMethodsMixin, list):
         # logger.debug(out)
         return out
 
-    def apply(self, func: Callable) -> Self:
+    def apply(self, func: Callable[[Any], Any]) -> Self:
         """
         Apply function to each entry
 
@@ -489,6 +490,30 @@ class ListExt(ShowAllMethodsMixin, list):
         """
         start = int(set_min(start, min_value=0))
         return self.__class__(enumerate(self, start=start))
+
+    @versionadded("5.1.0")  # no test case yet
+    def split_chunk(self, chunk_size: int) -> list[list]:
+        """
+        Split list into smaller chunks
+
+        Parameters
+        ----------
+        chunk_size : int
+            Chunk size, minimum: ``1``
+
+        Returns
+        -------
+        list[list]
+            List of chunk
+
+
+        Example:
+        --------
+        >>> ListExt([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]).split_chunk(5)
+        [[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1]]
+        """
+        slice_points = list(range(0, len(self), max(chunk_size, 1)))[1:]
+        return self.slice_points(slice_points)
 
     @staticmethod
     @deprecated("5.0.0")

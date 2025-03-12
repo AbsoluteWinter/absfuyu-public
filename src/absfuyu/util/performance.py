@@ -3,8 +3,8 @@ Absfuyu: Performance
 --------------------
 Performance Check
 
-Version: 5.0.0
-Date updated: 22/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 
 Feature:
 --------
@@ -36,7 +36,7 @@ from functools import wraps
 from inspect import getsource
 from typing import Any, ParamSpec, TypeVar
 
-from absfuyu.core import versionadded, versionchanged
+from absfuyu.core import deprecated, versionadded, versionchanged
 from absfuyu.dxt import ListNoDunder
 
 # Type
@@ -225,7 +225,7 @@ def retry(retries: int, delay: float = 1):
 
 # Class
 # ---------------------------------------------------------------------------
-# TODO: Rewrite this with inspect
+@deprecated("5.1.0", reason="Use `absfuyu.tools.inspector` instead")
 class Checker:
     """
     Check a variable

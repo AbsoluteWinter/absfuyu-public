@@ -3,12 +3,17 @@ ABSFUYU CLI
 -----------
 Game
 
-Version: 5.0.0
-Date updated: 16/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 """
 
+# Module Package
+# ---------------------------------------------------------------------------
 __all__ = ["game_group"]
 
+
+# Library
+# ---------------------------------------------------------------------------
 import click
 
 from absfuyu.game import game_escapeLoop, game_RockPaperScissors
@@ -17,6 +22,8 @@ from absfuyu.game.tictactoe import GameMode, TicTacToe
 from absfuyu.game.wordle import Wordle
 
 
+# CLI
+# ---------------------------------------------------------------------------
 @click.command
 @click.option(
     "--hard",

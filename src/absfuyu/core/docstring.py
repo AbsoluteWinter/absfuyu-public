@@ -3,8 +3,8 @@ Absfuyu: Core
 -------------
 Sphinx docstring decorator
 
-Version: 5.0.0
-Date updated: 23/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 """
 
 # Module Package
@@ -28,9 +28,9 @@ from typing import ClassVar, ParamSpec, TypeVar, overload
 
 # Type
 # ---------------------------------------------------------------------------
-P = ParamSpec("P")  # Parameter type
-R = TypeVar("R")  # Return type - Can be anything
-T = TypeVar("T", bound=type)  # Type type - Can be any subtype of `type`
+_P = ParamSpec("_P")  # Parameter type
+_R = TypeVar("_R")  # Return type - Can be anything
+_T = TypeVar("_T", bound=type)  # Type type - Can be any subtype of `type`
 
 _SPHINX_DOCS_TEMPLATE = Template("$line_break*$mode in version $version$reason*")
 
@@ -88,10 +88,13 @@ class SphinxDocstring:
         self.mode = mode
 
     @overload
-    def __call__(self, obj: T) -> T: ...  # Class overload
+    def __call__(self, obj: _T) -> _T: ...  # Class overload
+
     @overload
-    def __call__(self, obj: Callable[P, R]) -> Callable[P, R]: ...  # Function overload
-    def __call__(self, obj: T | Callable[P, R]) -> T | Callable[P, R]:
+    def __call__(
+        self, obj: Callable[_P, _R]
+    ) -> Callable[_P, _R]: ...  # Function overload
+    def __call__(self, obj: _T | Callable[_P, _R]) -> _T | Callable[_P, _R]:
         # Class wrapper
         if isinstance(obj, type):  # if inspect.isclass(obj):
             obj.__doc__ = (obj.__doc__ or "") + self._generate_version_note(
@@ -101,7 +104,7 @@ class SphinxDocstring:
 
         # Function wrapper
         @wraps(obj)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        def wrapper(*args: _P.args, **kwargs: _P.kwargs) -> _R:
             return obj(*args, **kwargs)
 
         # Add docstring
@@ -127,19 +130,19 @@ class SphinxDocstring:
         if docs is None:
             return res
 
-        # # Index of the last whitespaces
-        # # https://stackoverflow.com/a/13649118
-        # res = next((i for i, c in enumerate(docs) if not c.isspace()), 0)
-        # return res if res % 2 == 0 else res - 1
+        try:
+            # Replace tabs with space and split line
+            lines = docs.expandtabs(4).splitlines()
+        except UnicodeError:
+            return res
+        else:
+            # Get indentation of each line and unique it
+            indent_set = {len(line) - len(line.lstrip()) for line in lines[1:]}
+            # Drop 0
+            res_list = sorted([x for x in indent_set if x > 0])
 
-        # Alternative solution
-        for char in docs:
-            if char == " ":
-                res += 1
-            if char == "\t":
-                res += 4
-            if not char.isspace():
-                break
+        if res_list:
+            return res_list[0]
         return res
 
     def _generate_version_note(self, num_of_white_spaces: int) -> str:

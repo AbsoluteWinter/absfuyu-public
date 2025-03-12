@@ -33,7 +33,7 @@ extensions = [
     # "sphinx.ext.extlinks", # short link
     "sphinx.ext.githubpages",
     "sphinx.ext.napoleon",
-    # "sphinx.ext.viewcode" # This shows source code
+    "sphinx.ext.viewcode",  # This shows source code
     "sphinx_copybutton",
     "myst_parser",  # Markdown support
 ]

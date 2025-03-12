@@ -3,8 +3,8 @@ Absfuyu: Beautiful
 ------------------
 A decorator that makes output more beautiful
 
-Version: 5.0.0
-Date updated: 22/02/2025 (dd/mm/yyyy)
+Version: 5.1.0
+Date updated: 10/03/2025 (dd/mm/yyyy)
 """
 
 # Module level
@@ -77,6 +77,7 @@ class PerformanceOutput(NamedTuple):
         return out
 
 
+# TODO: header and footer layout to 1,2,3 instead of true false
 class BeautifulOutput:
     """A decorator that makes output more beautiful"""
 
