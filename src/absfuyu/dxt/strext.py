@@ -3,8 +3,8 @@ Absfuyu: Data Extension
 -----------------------
 str extension
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 13/03/2025 (dd/mm/yyyy)
 """
 
 # Module Package
@@ -15,12 +15,70 @@ __all__ = ["Text", "TextAnalyzeDictFormat"]
 # Library
 # ---------------------------------------------------------------------------
 import random
+from string import ascii_letters as _ascii_letters
 from typing import NotRequired, Self, TypedDict
 
 from absfuyu.core import ShowAllMethodsMixin, deprecated, versionadded, versionchanged
-from absfuyu.logger import logger
-from absfuyu.tools.generator import Charset, Generator
 from absfuyu.util import set_min_max
+
+
+# Support function
+# ---------------------------------------------------------------------------
+def _generate_string(
+    charset: str | None = None,
+    size: int = 8,
+    times: int = 1,
+    unique: bool = True,
+) -> list[str]:
+    """
+    Generate a list of random string from character set
+    (Random string generator)
+
+    This is a lesser version of
+    ``absfuyu.tools.generator.Generator.generate_string()``
+
+    Parameters
+    ----------
+    charset : str, optional
+        Custom character set, by default ``None``
+        ([a-zA-Z] - string.ascii_letters)
+
+    size : int, optional
+            Length of each string in list, by default ``8``
+
+    times : int, optional
+        How many random string generated, by default ``1``
+
+    unique : bool, optional
+        Each generated text is unique, by default ``True``
+
+    Returns
+    -------
+    list[str]
+        List of random string generated
+    """
+
+    charset = _ascii_letters or charset
+
+    try:
+        char_lst = list(charset)  # type: ignore[arg-type]
+    except Exception:
+        char_lst = charset  # type: ignore[assignment]
+
+    unique_string = []
+    count = 0
+
+    while count < times:
+        gen_string = "".join(random.choice(char_lst) for _ in range(size))
+        if not unique:
+            unique_string.append(gen_string)
+            count += 1
+        else:
+            if gen_string not in unique_string:
+                unique_string.append(gen_string)
+                count += 1
+
+    return unique_string
 
 
 # Class
@@ -61,6 +119,9 @@ class TextAnalyzeDictFormat(TypedDict):
 class Text(ShowAllMethodsMixin, str):
     """
     ``str`` extension
+
+    >>> # For a list of new methods
+    >>> Text.show_all_methods()
     """
 
     def divide(self, string_split_size: int = 60) -> list[str]:
@@ -154,9 +215,7 @@ class Text(ShowAllMethodsMixin, str):
         splt_len = len(temp)
 
         if custom_var_name is None:
-            splt_name = Generator.generate_string(
-                charset=Charset.ALPHABET, size=split_var_len, times=splt_len + 1
-            )
+            splt_name = _generate_string(size=split_var_len, times=splt_len + 1)
             for i in range(splt_len):
                 output.append(f"{splt_name[i]}='{temp[i]}'")
         else:
@@ -361,14 +420,15 @@ class Text(ShowAllMethodsMixin, str):
         probability = int(set_min_max(probability))
         text = self.lower()
 
-        temp = []
-        for x in text:
-            if random.randint(1, 100) <= probability:
-                x = x.upper()
-            temp.append(x)
-        logger.debug(temp)
-        return self.__class__("".join(temp))
+        random_caps = (
+            x.upper() if random.randint(1, 100) <= probability else x for x in text
+        )
+        return self.__class__("".join(random_caps))
 
+    @deprecated(
+        "5.2.0",
+        reason="str already has swapcase() method, will be removed in version 5.3.0",
+    )
     @versionchanged("5.0.0", reason="Use ``str.swapcase()``")
     def reverse_capslock(self) -> Self:
         """
@@ -406,7 +466,7 @@ class Text(ShowAllMethodsMixin, str):
         """
         return list(self)
 
-    @deprecated("5.0.0", reason="Unused")
+    @deprecated("5.0.0", reason="Unused, will be removed in version 5.3.0")
     def to_listext(self) -> None:
         """Deprecated, will be removed soon"""
         raise NotImplementedError("Deprecated, will be removed soon")

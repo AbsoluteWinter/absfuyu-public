@@ -5,7 +5,7 @@ Mod7 product key generator (90's)
 
 This is for educational and informative purposes only.
 
-Version: 5.1.0
+Version: 5.2.0
 Date updated: 10/03/2025 (dd/mm/yyyy)
 """
 

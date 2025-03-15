@@ -3,8 +3,8 @@ Absfuyu: Json Method
 --------------------
 ``.json`` file handling
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 12/03/2025 (dd/mm/yyyy)
 """
 
 # Module level
@@ -16,7 +16,6 @@ __all__ = ["JsonFile"]
 # ---------------------------------------------------------------------------
 import json
 from pathlib import Path
-from typing import Any
 
 from absfuyu.core import BaseClass
 
@@ -26,6 +25,20 @@ from absfuyu.core import BaseClass
 class JsonFile(BaseClass):
     """
     ``.json`` file handling
+
+    Parameters
+    ----------
+    json_file_location : str | Path
+        .json file location
+
+    encoding : str | None, optional
+        Data encoding, by default ``"utf-8"``
+
+    indent : int | str | None, optional
+        Indentation when export to json file, by default ``4``
+
+    sort_keys : bool, optional
+        Sort the keys before export to json file, by default ``True``
     """
 
     def __init__(
@@ -37,26 +50,40 @@ class JsonFile(BaseClass):
         sort_keys: bool = True,
     ) -> None:
         """
-        json_file_location: json file location
-        encoding: data encoding (Default: utf-8)
-        indent: indentation when export to json file
-        sort_keys: sort the keys before export to json file
+        ``.json`` file handling
+
+        Parameters
+        ----------
+        json_file_location : str | Path
+            .json file location
+
+        encoding : str | None, optional
+            Data encoding, by default ``"utf-8"``
+
+        indent : int | str | None, optional
+            Indentation when export to json file, by default ``4``
+
+        sort_keys : bool, optional
+            Sort the keys before export to json file, by default ``True``
         """
+
         self.json_file_location = Path(json_file_location)
         self.encoding = encoding
         self.indent = indent
         self.sort_keys = sort_keys
-        self.data: dict[Any, Any] = {}
+        self.data: dict = {}
 
     def __str__(self) -> str:
         return f"{self.__class__.__name__}({self.json_file_location.name})"
 
-    def load_json(self) -> dict[Any, Any]:
+    def load_json(self) -> dict:
         """
         Load ``.json`` file
 
-        :returns: ``.json`` data
-        :rtype: dict
+        Returns
+        -------
+        dict
+            ``.json`` data
         """
         with open(self.json_file_location, "r", encoding=self.encoding) as file:
             self.data = json.load(file)
@@ -68,11 +95,13 @@ class JsonFile(BaseClass):
         with open(self.json_file_location, "w", encoding=self.encoding) as file:
             file.writelines(json_data)
 
-    def update_data(self, data: dict[Any, Any]) -> None:
+    def update_data(self, data: dict) -> None:
         """
         Update ``.json`` data without save
 
-        :param data: ``.json`` data
-        :type data: dict
+        Parameters
+        ----------
+        data : dict
+            ``.json`` data
         """
         self.data = data

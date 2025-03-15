@@ -1,8 +1,8 @@
 """
 Test: Version
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 15/03/2025 (dd/mm/yyyy)
 """
 
 from itertools import product

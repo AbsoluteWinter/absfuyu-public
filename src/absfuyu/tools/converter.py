@@ -3,8 +3,8 @@ Absufyu: Converter
 ------------------
 Convert stuff
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 15/03/2025 (dd/mm/yyyy)
 
 Feature:
 --------
@@ -19,6 +19,8 @@ __all__ = [
     "Base64EncodeDecode",
     "Text2Chemistry",
     "Str2Pixel",
+    # Support
+    "ChemistryElement",
 ]
 
 
@@ -36,7 +38,7 @@ from absfuyu.core.baseclass import BaseClass, CLITextColor
 from absfuyu.core.docstring import versionadded
 from absfuyu.logger import logger
 from absfuyu.pkg_data import DataList, DataLoader
-from absfuyu.util import set_min
+from absfuyu.util.text_table import OneColumnTableMaker
 
 
 # Class
@@ -167,6 +169,10 @@ class ChemistryElement(BaseClass):
 
 
 class Text2Chemistry(BaseClass):
+    """
+    Convert text into chemistry symbols.
+    """
+
     def __init__(self) -> None:
         self.data_location = DataList.CHEMISTRY
 
@@ -301,16 +307,31 @@ class Text2Chemistry(BaseClass):
         if len(result) == 0:
             res = "No possible combination"
         else:
-            msg = []
+            header = ["Text to Chemistry"]
+            body = []
+            max_table_len = len(header[0])
+
             for i, solution in enumerate(result, start=1):
+                msg = []
                 max_word_len = max([len(x.name) for x in solution])
                 msg.append(f"Option {i:02}: {', '.join([x.symbol for x in solution])}")
                 for x in solution:
                     msg.append(
-                        f"{x.symbol.ljust(2)} ({x.number:02}. {x.name.ljust(max_word_len)} - {round(x.atomic_mass, 2)})"
+                        f"{x.symbol.ljust(2)} "
+                        f"({x.number:02}. {x.name.ljust(max_word_len)}"
+                        f" - {round(x.atomic_mass, 2)})"
                     )
-                msg.append("---")
-            res = "\n".join(msg)
+                body.append(msg)
+
+            max_table_len = max(
+                max([max([len(x) for x in opt]) for opt in body]), max_table_len
+            )
+            table = OneColumnTableMaker(ncols=max_table_len + 4, style="normal")
+            table.add_paragraph(header)
+            for x in body:
+                table.add_paragraph(x)
+
+            res = table.make_table()
         return res
 
 
@@ -357,7 +378,7 @@ class Str2Pixel(BaseClass):
         """
         self.data = str_data
         if pixel_symbol_overwrite is None:
-            self.pixel = self.PIXEL * int(set_min(pixel_size, min_value=1))
+            self.pixel = self.PIXEL * int(max(pixel_size, 1))
         else:
             self.pixel = pixel_symbol_overwrite
 

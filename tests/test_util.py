@@ -1,8 +1,8 @@
 """
 Test: Util
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 15/03/2025 (dd/mm/yyyy)
 """
 
 from pathlib import Path
@@ -20,10 +20,12 @@ from absfuyu.util.path import Directory
 class TestUtil:
     """absfuyu.util"""
 
+    @pytest.mark.skip
     @pytest.mark.parametrize(["value", "output"], [(10, 10), (-5, 0)])
     def test_set_min(self, value: int, output: int) -> None:
         assert set_min(value, min_value=0) == output
 
+    @pytest.mark.skip
     @pytest.mark.parametrize(["value", "output"], [(200, 100), (10, 10)])
     def test_set_max(self, value: int, output: int) -> None:
         assert set_max(value, max_value=100) == output

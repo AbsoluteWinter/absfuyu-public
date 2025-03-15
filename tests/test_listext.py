@@ -1,8 +1,8 @@
 """
 Test: Data extension - ListExt
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 12/03/2025 (dd/mm/yyyy)
 """
 
 import pytest
@@ -130,3 +130,31 @@ class TestListExt:
     def test_flatten(self, list_example: ListExt) -> None:
         test = list_example.flatten()
         assert test
+
+    def test_flatten_2(self) -> None:
+        test = ListExt([[[[1]]]])
+        assert test.flatten(recursive=True) == [1]
+
+    # split chunk
+    @pytest.mark.parametrize(
+        ["value", "output"],
+        [
+            (-1, [[1], [1], [1], [1], [1], [1], [1], [1], [1]]),
+            (1, [[1], [1], [1], [1], [1], [1], [1], [1], [1]]),
+            (2, [[1, 1], [1, 1], [1, 1], [1, 1], [1]]),
+            (5, [[1, 1, 1, 1, 1], [1, 1, 1, 1]]),
+            (100, [[1, 1, 1, 1, 1, 1, 1, 1, 1]]),
+        ],
+    )
+    def test_split_chunk(self, value: int, output: list[list]) -> None:
+        test = ListExt([1, 1, 1, 1, 1, 1, 1, 1, 1])
+        assert test.split_chunk(chunk_size=value) == output
+
+    # max item len
+    def test_max_item_len(self) -> None:
+        ins = ListExt(["test", "longer_test"])
+        assert ins.max_item_len() == 11
+
+    def test_max_item_len_2(self) -> None:
+        ins = ListExt([["short"], [[["longer_test"]]]])
+        assert ins.max_item_len(recursive=True) == 11

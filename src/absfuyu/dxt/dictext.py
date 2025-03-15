@@ -3,8 +3,8 @@ Absfuyu: Data Extension
 -----------------------
 dict extension
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 12/03/2025 (dd/mm/yyyy)
 """
 
 # Module Package
@@ -37,6 +37,9 @@ class DictAnalyzeResult(NamedTuple):
 class DictExt(ShowAllMethodsMixin, dict):
     """
     ``dict`` extension
+
+    >>> # For a list of new methods
+    >>> DictExt.show_all_methods()
     """
 
     @versionchanged("3.3.0", reason="Updated return type")

@@ -3,8 +3,8 @@ Absfuyu: Data Extension
 -----------------------
 int extension
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 12/03/2025 (dd/mm/yyyy)
 """
 
 # Module Package
@@ -62,6 +62,9 @@ class Pow:
 class IntExt(ShowAllMethodsMixin, int):
     """
     ``int`` extension
+
+    >>> # For a list of new methods
+    >>> IntExt.show_all_methods()
     """
 
     # convert stuff

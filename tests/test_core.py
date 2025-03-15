@@ -1,8 +1,8 @@
 """
 Test: Core
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 13/03/2025 (dd/mm/yyyy)
 """
 
 from inspect import getdoc
@@ -383,7 +383,9 @@ class TestSphinxDocstring:
                     k.__doc__.endswith(template),
                     k().__doc__.endswith(template),
                     k.cmethod.__doc__ == ClassToTestDocs.cmethod.__doc__,
+                    k().cmethod.__doc__ == ClassToTestDocs().cmethod.__doc__,
                     k.stmethod.__doc__ == ClassToTestDocs.stmethod.__doc__,
+                    k().stmethod.__doc__ == ClassToTestDocs().stmethod.__doc__,
                     k.method.__doc__ == ClassToTestDocs.method.__doc__,
                     k().method.__doc__ == ClassToTestDocs().method.__doc__,
                 ]

@@ -3,8 +3,8 @@ ABSFUYU CLI
 -----------
 Color
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 13/03/2025 (dd/mm/yyyy)
 """
 
 # Module Package
@@ -16,7 +16,7 @@ __all__ = ["COLOR"]
 # ---------------------------------------------------------------------------
 try:
     import colorama
-except ModuleNotFoundError:  # Check for `colorama`
+except ImportError:  # Check for `colorama`
     colorama = None
 
 # Color

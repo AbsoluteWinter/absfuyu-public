@@ -3,8 +3,8 @@ Absfuyu: Data Analysis
 ----------------------
 Data Analyst DataFrame
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 15/03/2025 (dd/mm/yyyy)
 """
 
 # Module level
@@ -39,11 +39,12 @@ except ImportError:
 
 from absfuyu.core.baseclass import ShowAllMethodsMixin
 from absfuyu.core.docstring import deprecated, versionadded
-from absfuyu.core.typings import _R, _T
 from absfuyu.extra.da.dadf_base import CityData
 from absfuyu.extra.da.dadf_base import DataAnalystDataFrameBase as DFBase
 from absfuyu.extra.da.dadf_base import SplittedDF
 from absfuyu.logger import logger
+from absfuyu.typings import R as _R
+from absfuyu.typings import T as _T
 from absfuyu.util import set_min_max
 
 
@@ -1135,4 +1136,42 @@ class DADF_WIP(DADF):
     W.I.P - No test cases written
     """
 
-    pass
+    def split_str_column(
+        self,
+        col: str,
+        pattern: str = " ",
+        *,
+        n: int | None = None,
+        regex: bool = False,
+    ) -> Self:
+        """
+        Split column with dtype[str] into other columns.
+
+        Parameters
+        ----------
+        col : str
+            Column name
+
+        pattern : str, optional
+            Split pattern, by default ``" "``
+
+        n : int | None, optional
+            Split by how many times, by default ``None``
+
+        regex : bool, optional
+            Regex mode, by default ``False``
+
+        Returns
+        -------
+        Self
+            DataFrame
+        """
+        if n is None:
+            pass
+        splited_data: pd.DataFrame = self[col].str.split(
+            pat=pattern, n=n, expand=True, regex=regex
+        )
+        num_of_splitted_cols = splited_data.shape[1]
+        new_col_names = [f"{col}_{x}" for x in range(num_of_splitted_cols)]
+        self[new_col_names] = splited_data
+        return self

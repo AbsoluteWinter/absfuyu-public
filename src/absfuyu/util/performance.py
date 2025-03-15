@@ -3,8 +3,8 @@ Absfuyu: Performance
 --------------------
 Performance Check
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 15/03/2025 (dd/mm/yyyy)
 
 Feature:
 --------
@@ -20,6 +20,7 @@ Feature:
 __all__ = [
     # Wrapper
     "function_debug",
+    "function_benchmark",
     "measure_performance",
     "retry",
     # Class
@@ -32,17 +33,41 @@ __all__ = [
 import time
 import tracemalloc
 from collections.abc import Callable
+from dataclasses import dataclass
 from functools import wraps
 from inspect import getsource
-from typing import Any, ParamSpec, TypeVar
+from typing import Any, Literal, ParamSpec, TypeVar, overload
 
 from absfuyu.core import deprecated, versionadded, versionchanged
-from absfuyu.dxt import ListNoDunder
 
 # Type
 # ---------------------------------------------------------------------------
 P = ParamSpec("P")  # Parameter type
 R = TypeVar("R")  # Return type
+
+
+# Support
+# ---------------------------------------------------------------------------
+@dataclass
+class BenchmarkResult:
+    """
+    Use ``format(BenchmarkResult(...), "seconds")`` to view result in seconds.
+    """
+
+    min_: float
+    max_: float
+    avg: float
+
+    def __format__(self, format_spec: str) -> str:
+        clsname = self.__class__.__name__
+        if format_spec.lower().strip().startswith("seconds"):
+            fields = [f"{x}={getattr(self, x):,.6f}s" for x in self._get_fields()]
+            return f"{clsname}({', '.join(fields)})"
+        return repr(self)
+
+    @classmethod
+    def _get_fields(cls) -> tuple[str, ...]:
+        return tuple(cls.__dataclass_fields__)
 
 
 # Function
@@ -106,6 +131,96 @@ def measure_performance(f: Callable[P, R]) -> Callable[P, R]:
         return output
 
     return wrapper
+
+
+@overload
+def function_benchmark(func: Callable[P, R], /) -> Callable[P, R]: ...
+@overload
+def function_benchmark(*, n: int = 1) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
+@overload
+def function_benchmark(
+    *, n: int = 1, result_only: Literal[False] = False
+) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
+@overload
+def function_benchmark(
+    *, n: int = 1, result_only: Literal[True] = ...
+) -> Callable[[Callable[P, R]], Callable[P, BenchmarkResult]]: ...
+
+
+@versionadded("5.2.0")
+def function_benchmark(
+    func: Callable[P, R] | None = None, /, *, n: int = 1, result_only: bool = False
+):
+    """
+    This run function for ``n`` times and calculate min, max, average runtime.
+
+    Parameters
+    ----------
+    func : Callable[P, R] | None, optional
+        Callable with parameter **P and returns R, by default ``None``
+
+    n : int, optional
+        Run how many times, by default ``1``
+
+    result_only : bool, optional
+        Returns BenchmarkResult instead of ``func`` result, by default ``False``
+
+
+    Usage
+    -----
+    Use this as a decorator (``@function_benchmark``)
+
+    Example:
+    --------
+    >>> @function_benchmark
+    >>> def test():
+    ...     return 1 + 1
+    >>> test()
+    BenchmarkResult(min_=0.000000s, max_=0.000000s, avg=0.000000s)
+    2
+
+    >>> @function_benchmark(n=1)
+    >>> def test():
+    ...     return 1 + 1
+    >>> test()
+    BenchmarkResult(min_=0.000000s, max_=0.000000s, avg=0.000000s)
+    2
+    """
+
+    times = max(n, 1)
+
+    def decorator(f: Callable[P, R]) -> Callable[P, R | BenchmarkResult]:
+        @wraps(f)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R | BenchmarkResult:
+            output = f(*args, **kwargs)  # Run function and save result into a variable
+
+            def _run() -> float:
+                # Performance check
+                start_time = time.perf_counter()  # Start time measure
+                f(*args, **kwargs)
+                finish_time = time.perf_counter()  # Get finished time
+                return finish_time - start_time
+
+            # run = (_run() for _ in range(times))
+            run = [_run() for _ in range(times)]
+            try:
+                avg_runtime = sum(run) / len(run)
+            except ZeroDivisionError:
+                avg_runtime = min(run)
+            result = BenchmarkResult(min(run), max(run), avg_runtime)
+
+            if result_only:
+                return result
+
+            print(format(result, "seconds"))
+
+            return output
+
+        return wrapper
+
+    if func is None:
+        return decorator
+    return decorator(func)
 
 
 @versionadded("3.2.0")
@@ -284,7 +399,7 @@ class Checker:
     def dir_(self) -> list[str]:
         """``dir()`` of variable"""
         # return self.item_to_check.__dir__()
-        return ListNoDunder(self.item_to_check.__dir__())
+        return [x for x in dir(self.item_to_check) if not x.startswith("__")]
 
     @property
     def source(self) -> str | None:

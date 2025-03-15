@@ -3,8 +3,8 @@ Absfuyu: Passwordlib
 --------------------
 Password library
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 15/03/2025 (dd/mm/yyyy)
 """
 
 # Module level
@@ -27,7 +27,6 @@ from absfuyu.dxt import DictExt, Text
 from absfuyu.logger import logger
 from absfuyu.pkg_data import DataList, DataLoader
 from absfuyu.tools.generator import Charset, Generator
-from absfuyu.util import set_min
 
 
 # Function
@@ -213,7 +212,7 @@ class PasswordGenerator(BaseClass):
         while True:
             pwd = Generator.generate_string(
                 charset=charset,
-                size=set_min(length, min_value=8),  # type: ignore
+                size=max(length, 8),  # type: ignore
                 times=1,
                 string_type_if_1=True,
             )

@@ -1,8 +1,8 @@
 """
 Test: Everything
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 16/03/2025 (dd/mm/yyyy)
 """
 
 # Library
@@ -58,7 +58,6 @@ from absfuyu.core.docstring import (
     SphinxDocstringMode,
 )
 from absfuyu.core.dummy_func import dummy_function
-from absfuyu.core.typings import _CALLABLE, _CT, _N, _P, _R, _T, _Number
 from absfuyu.dxt import (
     DictAnalyzeResult,
     DictBoolFalse,
@@ -143,7 +142,7 @@ from absfuyu.tools.converter import (
     Text2Chemistry,
 )
 from absfuyu.tools.generator import Charset, Generator
-from absfuyu.tools.inspector import Inspector
+from absfuyu.tools.inspector import Inspector, inspect_all
 from absfuyu.tools.keygen import Keygen
 from absfuyu.tools.obfuscator import Obfuscator, StrShifter
 from absfuyu.tools.passwordlib import TOTP, PasswordGenerator, PasswordHash
@@ -155,6 +154,7 @@ from absfuyu.tools.shutdownizer import (
     ShutDownizer,
 )
 from absfuyu.tools.web import gen_random_commit_msg, soup_link  # Has bs4, requests
+from absfuyu.typings import _CALLABLE, CT, N, P, R, SupportsShowMethods, T, _Number
 from absfuyu.util import (
     get_installed_package,
     set_max,
@@ -177,7 +177,13 @@ from absfuyu.util.path import (
     FileOrFolderWithModificationTime,
     SaveFileAs,
 )
-from absfuyu.util.performance import Checker, function_debug, measure_performance, retry
+from absfuyu.util.performance import (
+    Checker,
+    function_benchmark,
+    function_debug,
+    measure_performance,
+    retry,
+)
 from absfuyu.util.shorten_number import (
     CommonUnitSuffixesFactory,
     Decimal,

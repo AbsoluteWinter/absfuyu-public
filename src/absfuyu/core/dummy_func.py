@@ -3,8 +3,8 @@ Absfuyu: Core
 -------------
 Dummy functions when other libraries are unvailable
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 13/03/2025 (dd/mm/yyyy)
 """
 
 # Module Package
@@ -26,7 +26,7 @@ from importlib import import_module
 try:
     _tqdm = import_module("tqdm")
     tqdm = getattr(_tqdm, "tqdm")  # noqa
-except (ModuleNotFoundError, AttributeError):
+except (ImportError, AttributeError):
 
     def tqdm(iterable, *args, **kwargs):
         """
@@ -40,7 +40,7 @@ except (ModuleNotFoundError, AttributeError):
 try:
     _unidecode = import_module("unidecode")
     unidecode = getattr(_unidecode, "unidecode")  # noqa
-except (ModuleNotFoundError, AttributeError):
+except (ImportError, AttributeError):
 
     def unidecode(*args, **kwargs):
         """

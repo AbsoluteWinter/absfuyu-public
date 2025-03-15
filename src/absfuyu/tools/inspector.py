@@ -3,21 +3,22 @@ Absfuyu: Inspector
 ------------------
 Inspector
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 16/03/2025 (dd/mm/yyyy)
 """
 
 # Module level
 # ---------------------------------------------------------------------------
-__all__ = ["Inspector"]
+__all__ = ["Inspector", "inspect_all"]
 
 # Library
 # ---------------------------------------------------------------------------
-import inspect
+import inspect as _inspect
 import os
+from functools import partial
 from textwrap import TextWrapper
 from textwrap import shorten as text_shorten
-from typing import Any
+from typing import Any, Literal, overload
 
 from absfuyu.core.baseclass import (
     AutoREPRMixin,
@@ -33,7 +34,8 @@ from absfuyu.util.text_table import OneColumnTableMaker
 # TODO: rewrite with each class for docs, method, property, attr, param, title
 class Inspector(AutoREPRMixin):
     """
-    Inspect an object
+    Inspect an object.
+    By default shows object's docstring and attribute (if any).
 
     Parameters
     ----------
@@ -42,7 +44,7 @@ class Inspector(AutoREPRMixin):
 
     line_length: int | None
         Number of cols in inspect output (Split line every line_length).
-        Set to ``None`` to use ``os.get_terminal_size()``, by default ``88``
+        Set to ``None`` to use ``os.get_terminal_size()``, by default ``None``
 
     include_docs : bool, optional
         Include docstring, by default ``True``
@@ -54,7 +56,7 @@ class Inspector(AutoREPRMixin):
         Include object's methods (if any), by default ``False``
 
     include_property : bool, optional
-        Include object's properties (if any), by default ``True``
+        Include object's properties (if any), by default ``False``
 
     include_attribute : bool, optional
         Include object's attributes (if any), by default ``True``
@@ -65,27 +67,57 @@ class Inspector(AutoREPRMixin):
     include_all : bool, optional
         Include all infomation availble, by default ``False``
 
+    max_textwrap_lines : int, optional
+        Maximum lines for the output's header (class, signature, repr).
+        Must be >= 1, by default ``8``
+
 
     Example:
     --------
     >>> print(Inspector(<object>, **kwargs))
     """
 
+    @overload
+    def __init__(self, obj: Any) -> None: ...
+
+    @overload
+    def __init__(self, obj: Any, *, include_all: Literal[True] = ...) -> None: ...
+
+    @overload
     def __init__(
         self,
         obj: Any,
         *,
-        line_length: int | None = 88,
+        line_length: int | None = None,
         include_docs: bool = True,
         include_mro: bool = False,
         include_method: bool = False,
-        include_property: bool = True,
+        include_property: bool = False,
+        include_attribute: bool = True,
+        include_private: bool = False,
+        max_textwrap_lines: int = 8,
+    ) -> None: ...
+
+    def __init__(
+        self,
+        obj: Any,
+        *,
+        # Line length
+        line_length: int | None = None,
+        line_length_offset: int = 0,  # line_length += line_length_offset (when line_length=None)
+        max_textwrap_lines: int = 8,
+        # Include
+        include_docs: bool = True,
+        include_mro: bool = False,
+        include_method: bool = False,
+        include_property: bool = False,
         include_attribute: bool = True,
         include_private: bool = False,
         include_all: bool = False,
     ) -> None:
         """
-        Inspect an object
+        Inspect an object.
+        By default shows object's docstring and attribute (if any).
 
         Parameters
         ----------
@@ -94,7 +126,7 @@ class Inspector(AutoREPRMixin):
 
         line_length: int | None
             Number of cols in inspect output (Split line every line_length).
-            Set to ``None`` to use ``os.get_terminal_size()``, by default ``88``
+            Set to ``None`` to use ``os.get_terminal_size()``, by default ``None``
 
         include_docs : bool, optional
             Include docstring, by default ``True``
@@ -106,7 +138,7 @@ class Inspector(AutoREPRMixin):
             Include object's methods (if any), by default ``False``
 
         include_property : bool, optional
-            Include object's properties (if any), by default ``True``
+            Include object's properties (if any), by default ``False``
 
         include_attribute : bool, optional
             Include object's attributes (if any), by default ``True``
@@ -116,6 +148,10 @@ class Inspector(AutoREPRMixin):
 
         include_all : bool, optional
             Include all infomation availble, by default ``False``
+
+        max_textwrap_lines : int, optional
+            Maximum lines for the output's header (class, signature, repr).
+            Must be >= 1, by default ``8``
 
 
         Example:
@@ -141,7 +177,7 @@ class Inspector(AutoREPRMixin):
         # Setup line length
         if line_length is None:
             try:
-                self._linelength = os.get_terminal_size().columns
+                self._linelength = os.get_terminal_size().columns + line_length_offset
             except OSError:
                 self._linelength = 88
         elif isinstance(line_length, (int, float)):
@@ -156,7 +192,7 @@ class Inspector(AutoREPRMixin):
             subsequent_indent="",
             tabsize=4,
             break_long_words=True,
-            max_lines=8,
+            max_lines=max(max_textwrap_lines, 1),
         )
 
         # Output
@@ -167,18 +203,8 @@ class Inspector(AutoREPRMixin):
 
     # Support
     def _long_list_terminal_size(self, long_list: list) -> list:
-        max_name_len = max([len(x) for x in long_list]) + 1
-        cols = 1
-
-        if max_name_len <= self._linelength - 4:
-            cols = (self._linelength - 4) // max_name_len
-        splitted_chunk: list[list[str]] = ListExt(long_list).split_chunk(cols)
-
-        mod_chunk = ListExt(
-            [[x.ljust(max_name_len, " ") for x in chunk] for chunk in splitted_chunk]
-        ).apply(lambda x: "".join(x))
-
-        return list(mod_chunk)
+        ll = ListExt(long_list).wrap_to_column(self._linelength, margin=4)
+        return list(ll)
 
     # Signature
     def _make_title(self) -> str:
@@ -189,9 +215,9 @@ class Inspector(AutoREPRMixin):
         title_str = (
             str(self.obj)
             if (
-                inspect.isclass(self.obj)
+                _inspect.isclass(self.obj)
                 or callable(self.obj)
-                or inspect.ismodule(self.obj)
+                or _inspect.ismodule(self.obj)
             )
             else str(type(self.obj))
         )
@@ -199,17 +225,17 @@ class Inspector(AutoREPRMixin):
 
     def _get_signature_prefix(self) -> str:
         # signature prefix
-        if inspect.isclass(self.obj):
+        if _inspect.isclass(self.obj):
             return "class"
-        elif inspect.iscoroutinefunction(self.obj):
+        elif _inspect.iscoroutinefunction(self.obj):
             return "async def"
-        elif inspect.isfunction(self.obj):
+        elif _inspect.isfunction(self.obj):
             return "def"
         return ""
 
     def get_parameters(self) -> list[str] | None:
         try:
-            sig = inspect.signature(self.obj)
+            sig = _inspect.signature(self.obj)
         except (ValueError, AttributeError, TypeError):
             return None
         return [str(x) for x in sig.parameters.values()]
@@ -221,7 +247,7 @@ class Inspector(AutoREPRMixin):
         """
         try:
             return self._text_wrapper.wrap(
-                f"{self._get_signature_prefix()} {self.obj.__name__}{inspect.signature(self.obj)}"
+                f"{self._get_signature_prefix()} {self.obj.__name__}{_inspect.signature(self.obj)}"
             )
         #    not class, func | not type   | is module
         except (ValueError, AttributeError, TypeError):
@@ -229,9 +255,8 @@ class Inspector(AutoREPRMixin):
 
     # Method and property
     def _get_method_property(self) -> MethodNPropertyResult:
-        # if inspect.isclass(self.obj) or inspect.ismodule(self.obj):
-        if inspect.isclass(self.obj):
-            # TODO: Support enum type
+        # if _inspect.isclass(self.obj) or inspect.ismodule(self.obj):
+        if _inspect.isclass(self.obj):
             tmpcls = type(
                 "tmpcls",
                 (
@@ -271,7 +296,7 @@ class Inspector(AutoREPRMixin):
         Inspector's workflow:
         03. Get docstring and strip
         """
-        docs: str | None = inspect.getdoc(self.obj)
+        docs: str | None = _inspect.getdoc(self.obj)
 
         if docs is None:
             return ""
@@ -431,3 +456,8 @@ class Inspector(AutoREPRMixin):
 
     def detail_str(self) -> str:
         return self._inspect_output.make_table()
+
+
+# Partial
+# ---------------------------------------------------------------------------
+inspect_all = partial(Inspector, line_length=None, include_all=True)

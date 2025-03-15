@@ -3,15 +3,15 @@ ABSFUYU
 -------
 COMMAND LINE INTERFACE
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 13/03/2025 (dd/mm/yyyy)
 """
 
 # Library
 # ---------------------------------------------------------------------------
 try:
     from absfuyu.cli import cli
-except ModuleNotFoundError:  # Check for `click`, `colorama`
+except ImportError:  # Check for `click`, `colorama`
     from absfuyu.core.dummy_cli import cli
 
 

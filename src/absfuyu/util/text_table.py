@@ -3,8 +3,8 @@ Absufyu: Utilities
 ------------------
 Text table
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 13/03/2025 (dd/mm/yyyy)
 """
 
 # Module level
@@ -18,14 +18,28 @@ import os
 from collections.abc import Sequence
 from enum import StrEnum
 from textwrap import TextWrapper
-from typing import Literal
+from typing import Literal, Protocol, cast
 
 from absfuyu.core import BaseClass
 
 
 # Style
 # ---------------------------------------------------------------------------
-class BoxDrawingCharacter(StrEnum):
+class BoxDrawingCharacter(Protocol):
+    UPPER_LEFT_CORNER: str = ""
+    UPPER_RIGHT_CORNER: str = ""
+    HORIZONTAL: str = ""
+    VERTICAL: str = ""
+    LOWER_LEFT_CORNER: str = ""
+    LOWER_RIGHT_CORNER: str = ""
+    VERTICAL_RIGHT: str = ""
+    VERTICAL_LEFT: str = ""
+    CROSS: str = ""
+    HORIZONTAL_UP: str = ""
+    HORIZONTAL_DOWN: str = ""
+
+
+class BoxDrawingCharacterNormal(StrEnum):
     """
     Box drawing characters - Normal
 
@@ -105,6 +119,35 @@ class BoxDrawingCharacterDouble(StrEnum):
     HORIZONTAL_DOWN = "\u2566"
 
 
+def get_box_drawing_character(
+    style: Literal["normal", "bold", "dashed", "double"] = "normal",
+) -> BoxDrawingCharacter:
+    """
+    Choose style for Box drawing characters.
+
+    Parameters
+    ----------
+    style : Literal["normal", "bold", "dashed", "double"], optional
+        Style for the table, by default ``"normal"``
+
+    Returns
+    -------
+    BoxDrawingCharacter
+        Box drawing characters in specified style.
+    """
+
+    if style.lower() == "normal":
+        return cast(BoxDrawingCharacter, BoxDrawingCharacterNormal)
+    elif style.lower() == "bold":
+        return cast(BoxDrawingCharacter, BoxDrawingCharacterBold)
+    elif style.lower() == "dashed":
+        return cast(BoxDrawingCharacter, BoxDrawingCharacterDashed)
+    elif style.lower() == "double":
+        return cast(BoxDrawingCharacter, BoxDrawingCharacterDouble)
+    else:
+        return cast(BoxDrawingCharacter, BoxDrawingCharacterNormal)
+
+
 # Class
 # ---------------------------------------------------------------------------
 class OneColumnTableMaker(BaseClass):
@@ -159,16 +202,7 @@ class OneColumnTableMaker(BaseClass):
         self._paragraphs: list[Sequence[str]] = []
 
         # Style
-        if style == "normal":
-            self._table_char = BoxDrawingCharacter
-        elif style == "bold":
-            self._table_char = BoxDrawingCharacterBold  # type: ignore
-        elif style == "dashed":
-            self._table_char = BoxDrawingCharacterDashed  # type: ignore
-        elif style == "double":
-            self._table_char = BoxDrawingCharacterDouble  # type: ignore
-        else:
-            self._table_char = BoxDrawingCharacter  # type: ignore
+        self._table_char = get_box_drawing_character(style=style)
 
         # Text wrapper
         self._text_wrapper = TextWrapper(

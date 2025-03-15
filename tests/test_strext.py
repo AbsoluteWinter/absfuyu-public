@@ -1,8 +1,8 @@
 """
 Test: Data extension - Text
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 13/03/2025 (dd/mm/yyyy)
 """
 
 import pytest
@@ -128,13 +128,6 @@ class TestText:
             ).__len__()
             == 5
         )
-
-    # reverse capslock
-    @pytest.mark.parametrize(
-        ["value", "output"], [("Foo", "fOO"), ("Foo BAr", "fOO baR")]
-    )
-    def test_reverse_capslock(self, value: str, output: str) -> None:
-        assert Text(value).reverse_capslock() == output
 
     # to list
     def test_to_list(self) -> None:

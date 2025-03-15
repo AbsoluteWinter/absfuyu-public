@@ -3,9 +3,19 @@ Absufyu: Utilities
 ------------------
 Some random utilities
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 12/03/2025 (dd/mm/yyyy)
 """
+
+# Module Package
+# ---------------------------------------------------------------------------
+__all__ = [
+    "get_installed_package",
+    "set_min",
+    "set_max",
+    "set_min_max",
+    "stop_after_day",
+]
 
 # Library
 # ---------------------------------------------------------------------------
@@ -137,8 +147,12 @@ def set_min_max(
     >>> set_min_max(808)
     100
     """
-    current_value = set_min(current_value, min_value=min_value)
-    current_value = set_max(current_value, max_value=max_value)
+    # Set min
+    # current_value = set_min(current_value, min_value=min_value)
+    current_value = max(current_value, min_value)
+    # Set max
+    # current_value = set_max(current_value, max_value=max_value)
+    current_value = min(current_value, max_value)
     return current_value
 
 

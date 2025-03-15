@@ -1,8 +1,8 @@
 """
 Test: Inspector
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 13/03/2025 (dd/mm/yyyy)
 """
 
 from typing import Any
@@ -10,8 +10,8 @@ from typing import Any
 import pytest
 
 from absfuyu.core import BaseClass
-from absfuyu.core.typings import _T
 from absfuyu.tools.inspector import Inspector
+from absfuyu.typings import T as _T
 
 
 def dummy_function(param: _T, *args, **kwargs):

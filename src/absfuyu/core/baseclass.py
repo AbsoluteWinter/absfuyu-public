@@ -3,8 +3,8 @@ Absfuyu: Core
 -------------
 Bases for other features
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 11/03/2025 (dd/mm/yyyy)
 """
 
 # Module Package

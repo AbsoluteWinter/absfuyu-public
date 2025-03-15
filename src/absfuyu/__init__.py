@@ -22,7 +22,7 @@ Using in cmd:
 __title__ = "absfuyu"
 __author__ = "AbsoluteWinter"
 __license__ = "MIT License"
-__version__ = "5.1.0"
+__version__ = "5.2.0"
 __all__ = [
     "core",
     "config",

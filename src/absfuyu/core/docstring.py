@@ -3,8 +3,8 @@ Absfuyu: Core
 -------------
 Sphinx docstring decorator
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 14/03/2025 (dd/mm/yyyy)
 """
 
 # Module Package
@@ -53,6 +53,24 @@ class SphinxDocstring:
     A class-based decorator to add a 'Version added',
     'Version changed', or 'Deprecated' note to a function's docstring,
     formatted for Sphinx documentation.
+
+    Parameters
+    ----------
+    version : str
+        The version in which the function was added, changed, or deprecated.
+
+    reason : str | None, optional
+        An optional reason or description for the change
+        or deprecation, by default ``None``
+
+    mode : SphinxDocstringMode, optional
+        Specifies whether the function was 'added', 'changed', or 'deprecated',
+        by default SphinxDocstringMode.ADDED
+
+
+    Usage
+    -----
+    Use this as a decorator (``@SphinxDocstring(<parameters>)``)
     """
 
     _LINEBREAK: ClassVar[str] = "\n\n"  # Use ClassVar for constant
@@ -75,7 +93,7 @@ class SphinxDocstring:
             An optional reason or description for the change
             or deprecation, by default ``None``
 
-        mode : SphinxDocstringMode | int, optional
+        mode : SphinxDocstringMode, optional
             Specifies whether the function was 'added', 'changed', or 'deprecated',
             by default SphinxDocstringMode.ADDED
 
@@ -87,38 +105,27 @@ class SphinxDocstring:
         self.reason = reason
         self.mode = mode
 
-    @overload
-    def __call__(self, obj: _T) -> _T: ...  # Class overload
+    @overload  # Class overload
+    def __call__(self, obj: _T) -> _T: ...
 
-    @overload
-    def __call__(
-        self, obj: Callable[_P, _R]
-    ) -> Callable[_P, _R]: ...  # Function overload
+    @overload  # Function overload
+    def __call__(self, obj: Callable[_P, _R]) -> Callable[_P, _R]: ...
+
     def __call__(self, obj: _T | Callable[_P, _R]) -> _T | Callable[_P, _R]:
+        """
+        Decorator for class and callable
+        """
+
         # Class wrapper
         if isinstance(obj, type):  # if inspect.isclass(obj):
-            obj.__doc__ = (obj.__doc__ or "") + self._generate_version_note(
-                num_of_white_spaces=self._calculate_white_space(obj.__doc__)
-            )
-            return obj
+            return self._update_doc(obj)
 
         # Function wrapper
         @wraps(obj)
         def wrapper(*args: _P.args, **kwargs: _P.kwargs) -> _R:
             return obj(*args, **kwargs)
 
-        # Add docstring
-        # version_note = self._generate_version_note()
-        # if wrapper.__doc__ is None:
-        #     wrapper.__doc__ = version_note
-        # else:
-        #     wrapper.__doc__ += version_note
-
-        wrapper.__doc__ = (wrapper.__doc__ or "") + self._generate_version_note(
-            num_of_white_spaces=self._calculate_white_space(wrapper.__doc__)
-        )
-
-        return wrapper
+        return self._update_doc(wrapper)
 
     def _calculate_white_space(self, docs: str | None) -> int:
         """
@@ -157,6 +164,17 @@ class SphinxDocstring:
             version=self.version,
             reason=reason_str,
         )
+
+    @overload
+    def _update_doc(self, obj: _T) -> _T: ...
+    @overload
+    def _update_doc(self, obj: Callable[_P, _R]) -> Callable[_P, _R]: ...
+    def _update_doc(self, obj: _T | Callable[_P, _R]) -> _T | Callable[_P, _R]:
+        """Update docstring for an object"""
+        obj.__doc__ = (obj.__doc__ or "") + self._generate_version_note(
+            num_of_white_spaces=self._calculate_white_space(obj.__doc__)
+        )
+        return obj
 
 
 # Partial

@@ -1,10 +1,11 @@
 """
 Absfuyu: Zipped
 ---------------
-Zipping stuff (deprecated soon, most features already in absfuyu.util.path.Directory)
+Zipping stuff
+(deprecated, use absfuyu.util.path.Directory)
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 16/03/2025 (dd/mm/yyyy)
 """
 
 # Module level

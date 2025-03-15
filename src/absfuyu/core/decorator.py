@@ -3,8 +3,8 @@ Absfuyu: Core
 -------------
 Decorator
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 14/03/2025 (dd/mm/yyyy)
 """
 
 # Module Package
@@ -20,7 +20,7 @@ __all__ = [
 # ---------------------------------------------------------------------------
 from collections.abc import Callable
 from functools import wraps
-from typing import ParamSpec, TypeVar, overload
+from typing import ParamSpec, TypeVar, cast, overload
 
 # Type
 # ---------------------------------------------------------------------------
@@ -130,4 +130,4 @@ def add_subclass_methods_decorator(cls: T) -> T:
                     name = f"{cls.__module__}.{cls.__name__}"
                     cls.SUBCLASS_METHODS.update({name: sorted(methods_list)})
 
-    return type("AutoSubclass", (AutoSubclassMixin, cls), {})  # type: ignore[return-value]
+    return cast(T, type("AutoSubclass", (AutoSubclassMixin, cls), {}))

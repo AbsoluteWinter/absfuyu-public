@@ -1,8 +1,8 @@
 """
 Test: Generator
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 14/03/2025 (dd/mm/yyyy)
 """
 
 import random
@@ -87,6 +87,8 @@ class TestGenerator:
             (34458526632449856638, 7),
             (95486688921998713381, 8),
             (48981383446354864289, 9),
+            ("95489683516944151927", 0),
+            ([1, 5, 3, 9, 2, 4, 7, 9, 1, 5, 6, 5, 7, 5, 1, 5, 1, 8, 8, 2], 1),
         ],
     )
     def test_generate_check_digit(self, value: int, output: int) -> None:

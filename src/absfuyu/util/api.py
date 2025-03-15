@@ -3,8 +3,8 @@ Absufyu: API
 ------------
 Fetch data stuff
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 12/03/2025 (dd/mm/yyyy)
 """
 
 # Module level
@@ -25,7 +25,8 @@ from typing import NamedTuple
 
 import requests
 
-from absfuyu.core import versionadded, versionchanged
+from absfuyu.core.baseclass import BaseClass
+from absfuyu.core.docstring import versionadded, versionchanged
 from absfuyu.logger import logger
 
 
@@ -33,8 +34,15 @@ from absfuyu.logger import logger
 # ---------------------------------------------------------------------------
 class PingResult(NamedTuple):
     """
-    :param host: Host name/IP
-    :param result: Ping result in ms
+    Ping result
+
+    Parameters
+    ----------
+    host : str
+        Host name/IP
+
+    result : str
+        Ping result in ms
     """
 
     host: str
@@ -90,27 +98,39 @@ def ping_windows(host: list[str], ping_count: int = 3) -> list[PingResult]:
 
 # Class
 # ---------------------------------------------------------------------------
-class APIRequest:
-    """API data with cache feature"""
+class APIRequest(BaseClass):
+    """
+    API data with cache feature
+
+    Parameters
+    ----------
+    api_url : str
+        API link
+
+    encoding : str | None, optional
+        Data encoding, by default ``"utf-8"``
+    """
 
     def __init__(
         self,
         api_url: str,
-        *,  # Use "*" to force using keyword in function parameter | Example: APIRequest(url, encoding="utf-8")
+        *,
         encoding: str | None = "utf-8",
     ) -> None:
         """
-        :param api_url: api link
-        :param encoding: data encoding (Default: utf-8)
+        Create APIRequest instance
+
+        Parameters
+        ----------
+        api_url : str
+            API link
+
+        encoding : str | None, optional
+            Data encoding, by default ``"utf-8"``
         """
+
         self.url = api_url
         self.encoding = encoding
-
-    def __str__(self) -> str:
-        return f"{self.__class__.__name__}({self.url})"
-
-    def __repr__(self) -> str:
-        return self.__str__()
 
     def fetch_data(self, *, update: bool = False, json_cache: str | Path):
         """

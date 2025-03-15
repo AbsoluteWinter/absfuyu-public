@@ -3,8 +3,8 @@ Absfuyu: Data Extension
 -----------------------
 list extension
 
-Version: 5.1.0
-Date updated: 10/03/2025 (dd/mm/yyyy)
+Version: 5.2.0
+Date updated: 15/03/2025 (dd/mm/yyyy)
 """
 
 # Module Package
@@ -17,13 +17,13 @@ __all__ = ["ListExt"]
 import operator
 import random
 from collections import Counter
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from itertools import accumulate, chain, groupby
-from typing import Any, Self
+from typing import Any, Literal, Self, cast, overload
 
-from absfuyu.core import ShowAllMethodsMixin, deprecated
-from absfuyu.core.docstring import versionadded
-from absfuyu.util import set_min, set_min_max
+from absfuyu.core.baseclass import ShowAllMethodsMixin
+from absfuyu.core.docstring import deprecated, versionadded, versionchanged
+from absfuyu.util import set_min_max
 
 
 # Class
@@ -31,15 +31,20 @@ from absfuyu.util import set_min, set_min_max
 class ListExt(ShowAllMethodsMixin, list):
     """
     ``list`` extension
+
+    >>> # For a list of new methods
+    >>> ListExt.show_all_methods()
     """
 
+    # Deprecated
+    @deprecated("5.2.0", reason="Use ListExt.apply(str) instead")
     def stringify(self) -> Self:
         """
         Convert all item in ``list`` into string
 
         Returns
         -------
-        ListExt
+        Self
             A list with all items with type <str`>
 
 
@@ -51,6 +56,7 @@ class ListExt(ShowAllMethodsMixin, list):
         """
         return self.__class__(map(str, self))
 
+    # Info
     def head(self, number_of_items: int = 5) -> list:
         """
         Show first ``number_of_items`` items in ``ListExt``
@@ -91,6 +97,31 @@ class ListExt(ShowAllMethodsMixin, list):
         )
         return self[::-1][:number_of_items][::-1]
 
+    # Misc
+    def apply(self, func: Callable[[Any], Any]) -> Self:
+        """
+        Apply function to each entry
+
+        Parameters
+        ----------
+        func : Callable
+            Callable function
+
+        Returns
+        -------
+        Self
+            ListExt
+
+
+        Example:
+        --------
+        >>> test = ListExt([1, 2, 3])
+        >>> test.apply(str)
+        ['1', '2', '3']
+        """
+        # return self.__class__(map(func, self))
+        return self.__class__(func(x) for x in self)
+
     def sorts(self, reverse: bool = False) -> Self:
         """
         Sort all items (with different type) in ``list``
@@ -98,13 +129,12 @@ class ListExt(ShowAllMethodsMixin, list):
         Parameters
         ----------
         reverse : bool
-            | if ``True`` then sort in descending order
-            | if ``False`` then sort in ascending order
-            | (Default: ``False``)
+            - ``True`` then sort in descending order
+            - ``False`` then sort in ascending order (default value)
 
         Returns
         -------
-        ListExt
+        Self
             A sorted list
 
 
@@ -128,6 +158,25 @@ class ListExt(ShowAllMethodsMixin, list):
         # logger.debug(output)
         return self.__class__(output)
 
+    @overload
+    def freq(self) -> dict: ...
+
+    @overload
+    def freq(
+        self,
+        sort: bool = False,
+        num_of_first_char: int | None = None,
+        appear_increment: Literal[False] = ...,
+    ) -> dict: ...
+
+    @overload
+    def freq(
+        self,
+        sort: bool = False,
+        num_of_first_char: int | None = None,
+        appear_increment: Literal[True] = ...,
+    ) -> list[int]: ...
+
     def freq(
         self,
         sort: bool = False,
@@ -139,18 +188,17 @@ class ListExt(ShowAllMethodsMixin, list):
 
         Parameters
         ----------
-        sort : bool
-            | if ``True``: Sorts the output in ascending order
-            | if ``False``: No sort
+        sort : bool, optional
+            - ``True``: Sorts the output in ascending order
+            - ``False``: No sort (default value)
 
-        num_of_first_char : int | None
-            | Number of first character taken into account to sort
-            | (Default: ``None``)
-            | (num_of_first_char = ``1``: first character in each item)
+        num_of_first_char : int | None, optional
+            | Number of first character taken into account to sort, by default ``None``
+            | Eg: ``num_of_first_char = 1``: first character of each item
 
-        appear_increment : bool
-            | return incremental index list of each item when sort
-            | (Default: ``False``)
+        appear_increment : bool, optional
+            Returns incremental index list of each item when sort,
+            by default ``False``
 
         Returns
         -------
@@ -171,7 +219,6 @@ class ListExt(ShowAllMethodsMixin, list):
         >>> test.freq(appear_increment=True)
         [2, 3, 5, 6, 7, 8]
         """
-
         if sort:
             data = self.sorts().copy()
         else:
@@ -191,7 +238,7 @@ class ListExt(ShowAllMethodsMixin, list):
 
         try:
             times_appear = dict(sorted(temp.items()))
-        except Exception:
+        except TypeError:
             times_appear = dict(self.__class__(temp.items()).sorts())
         # logger.debug(times_appear)
 
@@ -204,44 +251,110 @@ class ListExt(ShowAllMethodsMixin, list):
         else:
             return times_appear  # character frequency
 
-    def slice_points(self, points: list[int]) -> list[list]:
+    @versionchanged("5.2.0", reason="New ``recursive`` parameter")
+    def flatten(self, recursive: bool = False) -> Self:
         """
-        Splits a list into sublists based on specified split points (indices).
-
-        This method divides the original list into multiple sublists. The ``points``
-        argument provides the indices at which the list should be split.  The resulting
-        list of lists contains the sublists created by these splits. The original
-        list is not modified.
+        Flatten the list
 
         Parameters
         ----------
-        points : list
-            A list of integer indices representing the points at which to split
-            the list. These indices are *exclusive* of the starting sublist
-            but *inclusive* of the ending sublist.
+        recursive : bool
+            Recursively flatten the list, by default ``False``
 
         Returns
         -------
-        list[list]
-            A list of lists, where each inner list is a slice of the original list
-            defined by the provided split points.
+        Self
+            Flattened list
 
 
         Example:
         --------
-        >>> test = ListExt([1, 1, 2, 3, 3, 4, 5, 6])
-        >>> test.slice_points([2, 5])
-        [[1, 1], [2, 3, 3], [4, 5, 6]]
-        >>> test.slice_points([0, 1, 2, 3, 4, 5, 6, 7, 8])
-        [[], [1], [1], [2], [3], [3], [4], [5], [6]]
-        >>> test.slice_points([])
-        [[1, 1, 2, 3, 3, 4, 5, 6]]
+        >>> test = ListExt([["test"], ["test", "test"], ["test"]])
+        >>> test.flatten()
+        ['test', 'test', 'test', 'test']
         """
-        points.append(len(self))
-        data = self.copy()
-        # return [data[points[i]:points[i+1]] for i in range(len(points)-1)]
-        return [data[i1:i2] for i1, i2 in zip([0] + points[:-1], points)]
 
+        def instance_checking(item):
+            if isinstance(item, str):
+                return [item]
+            if isinstance(item, Iterable):
+                return item
+            return [item]
+
+        # Flatten
+        list_of_list = (instance_checking(x) for x in self)
+        flattened = self.__class__(chain(*list_of_list))
+
+        # Recursive
+        if recursive:
+
+            def _condition(item) -> bool:
+                if isinstance(item, str):
+                    return False
+                return isinstance(item, Iterable)
+
+            while any(flattened.apply(_condition)):
+                flattened = flattened.flatten()
+
+        # Return
+        return flattened
+
+    @versionadded("5.2.0")
+    def join(self, sep: str = " ", /) -> str:
+        """
+        Join every element in list to str (``str.join()`` wrapper).
+
+        Parameters
+        ----------
+        sep : str, optional
+            Separator between each element, by default ``" "``
+
+        Returns
+        -------
+        str
+            Joined list
+
+
+        Example:
+        --------
+        >>> ListExt(["a", "b", "c"]).join()
+        a b c
+
+        >>> # Also work with non-str type
+        >>> ListExt([1, 2, 3]).join()
+        1 2 3
+        """
+        try:
+            return sep.join(self)
+        except TypeError:
+            return sep.join(self.apply(str))
+
+    def numbering(self, start: int = 0) -> Self:
+        """
+        Number the item in list
+        (``enumerate`` wrapper)
+
+        Parameters
+        ----------
+        start : int
+            Start from which number, by default ``0``
+
+        Returns
+        -------
+        Self
+            Counted list
+
+
+        Example:
+        --------
+        >>> test = ListExt([9, 9, 9])
+        >>> test.numbering()
+        [(0, 9), (1, 9), (2, 9)]
+        """
+        start = max(start, 0)
+        return self.__class__(enumerate(self, start=start))
+
+    # Random
     def pick_one(self) -> Any:
         """
         Pick one random items from ``list``
@@ -273,8 +386,7 @@ class ListExt(ShowAllMethodsMixin, list):
         Parameters
         ----------
         number_of_items : int
-            | Number random of items
-            | (Default: ``5``)
+            Number random of items, by default ``5``
 
         Returns
         -------
@@ -283,13 +395,15 @@ class ListExt(ShowAllMethodsMixin, list):
         """
         return [self.pick_one() for _ in range(number_of_items)]
 
+    # Len
+    @versionchanged("5.2.0", reason="Handle more type")
     def len_items(self) -> Self:
         """
-        ``len()`` for every item in ``list[str]``
+        ``len()`` for every item in ``self``
 
         Returns
         -------
-        ListExt
+        Self
             List of ``len()``'ed value
 
 
@@ -299,14 +413,24 @@ class ListExt(ShowAllMethodsMixin, list):
         >>> test.len_items()
         [3, 3, 5]
         """
-        out = self.__class__([len(str(x)) for x in self])
-        # out = ListExt(map(lambda x: len(str(x)), self))
-        # logger.debug(out)
-        return out
 
-    def mean_len(self) -> float:
+        def _len(item: Any) -> int:
+            try:
+                return len(item)
+            except TypeError:
+                return len(str(item))
+
+        return self.__class__([_len(x) for x in self])
+
+    @versionchanged("5.2.0", reason="New ``recursive`` parameter")
+    def mean_len(self, recursive: bool = False) -> float:
         """
-        Average length of every item
+        Average length of every item. Returns zero if failed (empty list, ZeroDivisionError).
+
+        Parameters
+        ----------
+        recursive : bool
+            Recursively find the average length of items in nested lists, by default ``False``
 
         Returns
         -------
@@ -320,41 +444,55 @@ class ListExt(ShowAllMethodsMixin, list):
         >>> test.mean_len()
         3.6666666666666665
         """
-        out = sum(self.len_items()) / len(self)
-        # logger.debug(out)
-        return out
 
-    def apply(self, func: Callable[[Any], Any]) -> Self:
+        if recursive:
+            dat = self.flatten(recursive=recursive)
+        else:
+            dat = self
+
+        try:
+            return sum(dat.len_items()) / len(dat)
+        except ZeroDivisionError:
+            return 0.0
+
+    @versionadded("5.2.0")
+    def max_item_len(self, recursive: bool = False) -> int:
         """
-        Apply function to each entry
+        Find the maximum length of items in the list.
 
         Parameters
         ----------
-        func : Callable
-            Callable function
+        recursive : bool
+            Recursively find the maximum length of items in nested lists, by default ``False``
 
         Returns
         -------
-        ListExt
-            ListExt
+        int
+            Maximum length of items
 
 
         Example:
         --------
-        >>> test = ListExt([1, 2, 3])
-        >>> test.apply(str)
-        ['1', '2', '3']
-        """
-        # return __class__(func(x) for x in self)
-        return self.__class__(map(func, self))
+        >>> test = ListExt(["test", "longer_test"])
+        >>> test.max_item_len()
+        11
 
+        >>> test = ListExt([["short"], ["longer_test"]])
+        >>> test.max_item_len(recursive=True)
+        11
+        """
+        if recursive:
+            return cast(int, max(self.flatten(recursive=True).len_items()))
+        return cast(int, max(self.len_items()))
+
+    # Group/Unique
     def unique(self) -> Self:
         """
         Remove duplicates
 
         Returns
         -------
-        ListExt
+        Self
             Duplicates removed list
 
 
@@ -372,7 +510,7 @@ class ListExt(ShowAllMethodsMixin, list):
 
         Returns
         -------
-        ListExt
+        Self
             Grouped value
 
 
@@ -424,7 +562,7 @@ class ListExt(ShowAllMethodsMixin, list):
         iter = self.copy()
 
         # Init loop
-        for _ in range(int(set_min(max_loop, min_value=3))):
+        for _ in range(max(max_loop, 3)):
             temp: dict[Any, list] = {}
             # Make dict{key: all `item` that contains `key`}
             for item in iter:
@@ -442,57 +580,47 @@ class ListExt(ShowAllMethodsMixin, list):
 
         return list(x for x, _ in groupby(iter))
 
-    def flatten(self) -> Self:
+    # Slicing
+    def slice_points(self, points: list[int]) -> Self:
         """
-        Flatten the list
+        Splits a list into sublists based on specified split points (indices).
 
-        Returns
-        -------
-        ListExt
-            Flattened list
-
-
-        Example:
-        --------
-        >>> test = ListExt([["test"], ["test", "test"], ["test"]])
-        >>> test.flatten()
-        ['test', 'test', 'test', 'test']
-        """
-        try:
-            # return self.__class__(sum(self, start=[]))
-            return self.__class__(chain(*self))
-        except Exception:
-            temp = list(map(lambda x: x if isinstance(x, list) else [x], self))
-            return self.__class__(chain(*temp))
-
-    def numbering(self, start: int = 0) -> Self:
-        """
-        Number the item in list
-        (``enumerate`` wrapper)
+        This method divides the original list into multiple sublists. The ``points``
+        argument provides the indices at which the list should be split.  The resulting
+        list of lists contains the sublists created by these splits. The original
+        list is not modified.
 
         Parameters
         ----------
-        start : int
-            Start from which number
-            (Default: ``0``)
+        points : list
+            A list of integer indices representing the points at which to split
+            the list. These indices are *exclusive* of the starting sublist
+            but *inclusive* of the ending sublist.
 
         Returns
         -------
-        ListExt
-            Counted list
+        Self | list[list]
+            A list of lists, where each inner list is a slice of the original list
+            defined by the provided split points.
 
 
         Example:
         --------
-        >>> test = ListExt([9, 9, 9])
-        >>> test.numbering()
-        [(0, 9), (1, 9), (2, 9)]
+        >>> test = ListExt([1, 1, 2, 3, 3, 4, 5, 6])
+        >>> test.slice_points([2, 5])
+        [[1, 1], [2, 3, 3], [4, 5, 6]]
+        >>> test.slice_points([0, 1, 2, 3, 4, 5, 6, 7, 8])
+        [[], [1], [1], [2], [3], [3], [4], [5], [6]]
+        >>> test.slice_points([])
+        [[1, 1, 2, 3, 3, 4, 5, 6]]
         """
-        start = int(set_min(start, min_value=0))
-        return self.__class__(enumerate(self, start=start))
+        points.append(len(self))
+        data = self.copy()
+        # return [data[points[i]:points[i+1]] for i in range(len(points)-1)]
+        return self.__class__(data[i1:i2] for i1, i2 in zip([0] + points[:-1], points))
 
-    @versionadded("5.1.0")  # no test case yet
-    def split_chunk(self, chunk_size: int) -> list[list]:
+    @versionadded("5.1.0")
+    def split_chunk(self, chunk_size: int) -> Self:
         """
         Split list into smaller chunks
 
@@ -503,7 +631,7 @@ class ListExt(ShowAllMethodsMixin, list):
 
         Returns
         -------
-        list[list]
+        Self | list[list]
             List of chunk
 
 
@@ -515,19 +643,53 @@ class ListExt(ShowAllMethodsMixin, list):
         slice_points = list(range(0, len(self), max(chunk_size, 1)))[1:]
         return self.slice_points(slice_points)
 
-    @staticmethod
-    @deprecated("5.0.0")
-    def _group_by_unique(iterable: list) -> list[list]:
+    @versionadded("5.2.0")  # no test case yet
+    def wrap_to_column(self, width: int, margin: int = 4) -> Self:
         """
-        Static method for ``group_by_unique``
-        """
-        return list([list(g) for _, g in groupby(iterable)])
+        Arrange list[str] items into aligned text columns (for printing)
+        with automatic column count calculation.
 
-    @staticmethod
-    @deprecated("5.0.0")
-    def _numbering(iterable: list, start: int = 0) -> list[tuple[int, Any]]:
+        Parameters
+        ----------
+        width : int
+            Total available display width (must be >= ``margin``)
+
+        margin : int, optional
+            Reserved space for borders/padding, by default ``4``
+
+        Returns
+        -------
+        Self
+            New instance type[list[str]] with formatted column strings.
+
+
+        Example:
+        --------
+        >>> items = ListExt(["apple", "banana", "cherry", "date"])
+        >>> print(items.wrap_to_column(30))
+        ['apple  banana cherry ', 'date   ']
+
+        >>> items.wrap_to_column(15)
+        ['apple  ', 'banana ', 'cherry ', 'date   ']
         """
-        Static method for ``numbering``
-        """
-        start = int(set_min(start, min_value=0))
-        return list(enumerate(iterable, start=start))
+
+        max_item_length = self.max_item_len() + 1  # +1 for spacing
+        available_width = max(width, 4) - max(margin, 2)  # Set boundary
+
+        # Calculate how many columns of text
+        column_count = (
+            max(1, available_width // max_item_length) if max_item_length > 0 else 1
+        )
+
+        # splitted_chunk: list[list[str]] = self.split_chunk(cols)
+        # mod_chunk = self.__class__(
+        #     [[x.ljust(max_name_len, " ") for x in chunk] for chunk in splitted_chunk]
+        # ).apply(lambda x: "".join(x))
+
+        def mod_item(item: list[str]) -> str:
+            # Set width for str item and join them together
+            return "".join(x.ljust(max_item_length, " ") for x in item)
+
+        mod_chunk = self.split_chunk(column_count).apply(mod_item)
+
+        return mod_chunk
